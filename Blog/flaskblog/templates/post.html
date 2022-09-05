@@ -1,0 +1,430 @@
+{% extends 'base.html' %}
+
+{% block body %}
+	<div id="main-body">
+		<article id="post-container">
+			<div id="post-header">
+				<div id="post-header-left">
+					<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
+
+					<div id="post-username-followers-container">
+						<a href="{{ url_for('users.user_posts', username=post.author.username) }}">
+							{{ post.author.username }}
+						</a>
+						<span>
+							{{ length(post.author.followers) }} Followers
+						</span>
+					</div>
+
+					{% if current_user.is_authenticated %}
+						{% if current_user != post.author %}
+							<form method="POST" action="{{ url_for('users.follow', user_id=post.author.id, post_id=post.id) }}">
+								{% if author_followed %}
+									<button id="follow-button" class="" name="follow_submit" value="follow_submit">
+										Following
+									</button>
+								{% else %}
+									<button id="follow-button" name="follow_submit" value="follow_submit">
+										+ Follow
+									</button>
+								{% endif %}
+							</form>
+						{% endif %}
+					{% else %}
+						<div>
+							<a href="{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}">
+								<div id="follow-button">
+									+ Follow
+								</div>
+							</a>
+						</div>
+					{% endif %}
+				</div>
+				
+				{% if post.author == current_user %}
+					<div>
+						<a href="{{ url_for('posts.update_post', post_id=post.id) }}">
+							Update
+						</a>
+
+						<button type="button" data-toggle="modal" data-target="#deleteModal">
+							Delete
+						</button>
+					</div>
+				{% endif %}
+			</div>
+
+			<div class="post-title">
+				<span>{{ post.title }}</span>
+				{{ post.date_posted.strftime('%Y-%m-%d') }}			
+			</div>
+
+			{% with item = namespace(value=0) %}
+				{% for text in splinted %}
+					{% if is_media(text) %}
+						<img src="{{ url_for('static', filename=rm_suffix(text)) }}">
+					{% else %}
+						<p class="post-content">{{ text }}</p>
+					{% endif %}
+
+					{% set item.value = item.value + 1 %}
+				{% endfor %}
+			{% endwith %}
+
+			<div id="post-actions-container">
+				{{ post.views }} views
+
+				{% if current_user.is_authenticated %}
+					{% if post_liked == 'True' %}
+						<form method="POST" id="post-like" action="{{ url_for('posts.comment', post_id=post.id, comment_id=0) }}">
+							{{ post_like_form.hidden_tag() }}
+								<!-- {{ post_like_form.like_submit(value="like_submit") }} -->
+							<button name="like_submit" value="like_submit">
+								liked
+								{{ length(post.post_likers) }} likes
+							</button>
+						</form>
+
+						<form method="POST" id="post-dislike" action="{{ url_for('posts.comment', post_id=post.id, comment_id=0) }}">
+							{{ post_dislike_form.hidden_tag() }}
+							<button name="dislike_submit" value="dislike_submit">
+								dislike
+								{{ length(post.post_dislikers) }} dislikes
+							</button>
+						</form>
+					{% elif not post_liked %}
+						<form method="POST" id="post-like" action="{{ url_for('posts.comment', post_id=post.id, comment_id=0) }}">
+							{{ post_like_form.hidden_tag() }}
+							<button name="like_submit" value="like_submit">
+								like
+								{{ length(post.post_likers) }} likes
+							</button>
+						</form>
+
+						<form method="POST" id="post-dislike" action="{{ url_for('posts.comment', post_id=post.id, comment_id=0) }}">
+							{{ post_dislike_form.hidden_tag() }}
+							<button name="dislike_submit" value="dislike_submit">
+								disliked
+								{{ length(post.post_dislikers) }} dislikes
+							</button>
+						</form>
+					{% else %}
+						<form method="POST" id="post-like" action="{{ url_for('posts.comment', post_id=post.id, comment_id=0) }}">
+							{{ post_like_form.hidden_tag() }}
+							<button name="like_submit" value="like_submit">
+								like
+								{{ length(post.post_likers) }} likes
+							</button>
+						</form>
+
+						<form method="POST" id="post-dislike" action="{{ url_for('posts.comment', post_id=post.id, comment_id=0) }}">
+							{{ post_dislike_form.hidden_tag() }}
+							<button name="dislike_submit" value="dislike_submit">
+								dislike
+								{{ length(post.post_dislikers) }} dislikes
+							</button>
+						</form>
+					{% endif %}
+				{% else %}
+					<div>
+						<a href="{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}">
+							<div class="post-like">
+								like
+								{{ length(post.post_likers) }} likes
+							</div>
+						</a>
+					</div>
+
+					<div>
+						<a href="{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}">
+							<div class="post-dislike">
+								dislike
+								{{ length(post.post_dislikers) }} dislikes
+							</div>
+						</a>
+					</div>
+				{% endif %}
+			</div>
+
+			<div id="comment-section-container">
+				<div id="comment-section-header">
+					<h3>{{ comments.count() }} Comments</h3>
+					<button id="sort-button">
+						<!-- Sort Img -->
+						<span>Sort By</span>
+					</button>
+				</div>
+
+				<div id="comment-section">
+					<div id="comment-create">
+						<img class="comment-account-img" height="36" width="36" draggable="false" src="{{ image_file }}"/>
+						<form id="comment-create-form" method="POST" action="{{ url_for('posts.comment', post_id=post.id, comment_id=0) }}">
+							{{ post_comment_form.hidden_tag() }}
+							{% if current_user.is_authenticated %}
+								{{ post_comment_form.content(class="comment-input", placeholder="Add a comment...", style="resize: none; overflow: hidden;") }}
+								<div class="hidden" style="display: block;">
+									<button id="cancel-button">Cancel</button>
+									<button id="submit-button">Comment</button>
+								</div>
+							{% else %}
+								<a href="{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}">
+									<input class="comment-input" placeholder="Add a comment...">
+								</a>
+							{% endif %}
+						</form>
+					</div>
+
+					{% for comment in comments %}
+						{% if not comment.comment_id %}
+							<div class="comment">
+								<a href="{{ url_for('users.user_posts', username=comment.author.username) }}">
+									<img class="comment-account-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
+								</a>
+							
+								<div class="comment-body">
+									<div class="comment-body-header">
+										<a class="comment-author" style="margin-right: 5px" href="{{ url_for('users.user_posts', username=comment.author.username) }}">
+											{{ comment.author.username }}
+										</a>
+										
+										<span class="comment-date-posted">{{ comment.date_posted.strftime('%Y-%m-%d') }}</span>
+									</div>
+									
+									<p class="comment-body-content">{{ comment.content }}</p>
+
+									<div class="comment-actions-container">
+										{% if current_user.is_authenticated %}
+											{% if comment_like_check(comment) == 'True' %}
+												<form method="POST" action="{{ url_for('posts.comment', post_id=post.id ,comment_id=comment.id) }}">
+													{{ comment_like_form.hidden_tag() }}
+													<button class="comment-like" name="like_submit" value="like_submit">
+														liked
+														{{ length(comment.comment_likers) }} likes
+													</button>
+												</form>
+
+												<form method="POST" action="{{ url_for('posts.comment', post_id=post.id ,comment_id=comment.id) }}">
+													{{ comment_dislike_form.hidden_tag() }}
+													<button class="comment-dislike" name="dislike_submit" value="dislike_submit">
+														dislike
+														{{ length(comment.comment_dislikers) }} dislikes
+													</button>
+												</form>
+											{% elif not comment_like_check(comment) %}
+												<form method="POST"  action="{{ url_for('posts.comment', post_id=post.id ,comment_id=comment.id) }}">
+													{{ comment_like_form.hidden_tag() }}
+													<button class="comment-like" name="like_submit" value="like_submit">
+														like
+														{{ length(comment.comment_likers) }} likes
+													</button>
+												</form>
+
+												<form method="POST" action="{{ url_for('posts.comment', post_id=post.id ,comment_id=comment.id) }}">
+													{{ comment_dislike_form.hidden_tag() }}
+													<button class="comment-dislike" name="dislike_submit" value="dislike_submit">
+														disliked
+														{{ length(comment.comment_dislikers) }} dislikes
+													</button>
+												</form>
+											{% else %}
+												<form method="POST" action="{{ url_for('posts.comment', post_id=post.id ,comment_id=comment.id) }}">
+													{{ comment_like_form.hidden_tag() }}
+													<button class="comment-like" name="like_submit" value="like_submit">
+														like
+														{{ length(comment.comment_likers) }} likes
+													</button>
+												</form>
+
+												<form method="POST" action="{{ url_for('posts.comment', post_id=post.id ,comment_id=comment.id) }}">
+													{{ comment_dislike_form.hidden_tag() }}
+													<button class="comment-dislike" name="dislike_submit" value="dislike_submit">
+														dislike
+														{{ length(comment.comment_dislikers) }} dislikes
+													</button>
+												</form>
+											{% endif %}
+
+											<button class="comment-reply">Reply</button>
+										{% else %}
+											<div>
+												<a href="{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}">
+													<div class="comment-like">
+														like
+														{{ length(comment.comment_likers) }} likes
+													</div>
+												</a>
+											</div>
+
+											<div>
+												<a href="{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}">
+													<div class="comment-dislike">
+														dislike
+														{{ length(comment.comment_dislikers) }} dislikes
+													</div>
+												</a>
+											</div>
+
+											<a href="{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}">
+												<button class="comment-reply">Reply</button>
+											</a>
+										{% endif %}											
+
+										<!-- Comment Form -->
+										<div class="comment-create" style="display: none;">
+											<img class="comment-account-img" height="36" width="36" draggable="false" src="{{ image_file }}"/>
+											<form id="comment-create-form" method="POST" action="{{ url_for('posts.comment', post_id=post.id, comment_id=comment.id) }}">
+												{{ comment_comment_form.hidden_tag() }}
+												{% if current_user.is_authenticated %}
+													{{ comment_comment_form.content(class="comment-input", placeholder="Add a Reply...", style="resize: none; overflow: hidden;") }}
+													<div class="hidden" style="display: block;">
+														<button id="cancel-button">Cancel</button>
+														<button id="submit-button">Comment</button>
+													</div>
+												{% else %}
+													<a href="{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}">
+														<input class="comment-input" placeholder="Add a Reply...">
+													</a>
+												{% endif %}
+											</form>
+										</div>
+									</div>
+
+									{% with comment_reply_count = namespace(value=0) %}
+										<div class="comment-replies" style="display: none;">
+											{% for comment_reply in comments %}
+												{% if comment_reply.comment_id == comment.id %}
+													{% set comment_reply_count.value = comment_reply_count.value + 1 %}
+													<div class="comment">
+														<a href="{{ url_for('users.user_posts', username=comment_reply.author.username) }}">
+															<img class="comment-account-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
+														</a>
+														
+														<div class="comment-body">
+															<div class="comment-body-header">
+																<a class="comment-author" style="margin-right: 5px" href="{{ url_for('users.user_posts', username=comment_reply.author.username) }}">
+																	{{ comment_reply.author.username }}
+																</a>
+																
+																<span class="comment-date-posted">{{ comment_reply.date_posted.strftime('%Y-%m-%d') }}</span>
+															</div>
+														
+															<p class="comment-body-content">{{ comment_reply.content }}</p>
+
+															<div class="comment-actions-container">
+																{% if current_user.is_authenticated %}
+																	{% if comment_like_check(comment_reply) == 'True' %}
+																		<form method="POST" action="{{ url_for('posts.comment', post_id=post.id ,comment_id=comment_reply.id) }}">
+																			{{ comment_like_form.hidden_tag() }}
+																			<button class="comment-like" name="like_submit" value="like_submit">
+																				liked
+																				{{ length(comment_reply.comment_likers) }} likes
+																			</button>
+																		</form>
+
+																		<form method="POST" action="{{ url_for('posts.comment', post_id=post.id ,comment_id=comment_reply.id) }}">
+																			{{ comment_dislike_form.hidden_tag() }}
+																			<button class="comment-dislike" name="dislike_submit" value="dislike_submit">
+																				dislike
+																				{{ length(comment_reply.comment_dislikers) }} dislikes
+																			</button>
+																		</form>
+																	{% elif not comment_like_check(comment_reply) %}
+																		<form method="POST"  action="{{ url_for('posts.comment', post_id=post.id ,comment_id=comment_reply.id) }}">
+																			{{ comment_like_form.hidden_tag() }}
+																			<button class="comment-like" name="like_submit" value="like_submit">
+																				like
+																				{{ length(comment_reply.comment_likers) }} likes
+																			</button>
+																		</form>
+
+																		<form method="POST" action="{{ url_for('posts.comment', post_id=post.id ,comment_id=comment_reply.id) }}">
+																			{{ comment_dislike_form.hidden_tag() }}
+																			<button class="comment-dislike" name="dislike_submit" value="dislike_submit">
+																				disliked
+																				{{ length(comment_reply.comment_dislikers) }} dislikes
+																			</button>
+																		</form>
+																	{% else %}
+																		<form method="POST" action="{{ url_for('posts.comment', post_id=post.id ,comment_id=comment_reply.id) }}">
+																			{{ comment_like_form.hidden_tag() }}
+																			<button class="comment-like" name="like_submit" value="like_submit">
+																				like
+																				{{ length(comment_reply.comment_likers) }} likes
+																			</button>
+																		</form>
+
+																		<form method="POST" action="{{ url_for('posts.comment', post_id=post.id ,comment_id=comment_reply.id) }}">
+																			{{ comment_dislike_form.hidden_tag() }}
+																			<button class="comment-dislike" name="dislike_submit" value="dislike_submit">
+																				dislike
+																				{{ length(comment_reply.comment_dislikers) }} dislikes
+																			</button>
+																		</form>
+																	{% endif %}
+
+																	<button class="comment-reply">Reply</button>
+																{% else %}
+																	<div>
+																		<a href="{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}">
+																			<div class="comment-like">
+																				like
+																				{{ length(comment_reply.comment_likers) }} likes
+																			</div>
+																		</a>
+																	</div>
+
+																	<div>
+																		<a href="{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}">
+																			<div class="comment-dislike">
+																				dislike
+																				{{ length(comment_reply.comment_dislikers) }} dislikes
+																			</div>
+																		</a>
+																	</div>
+
+																	<a href="{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}">
+																		<button class="comment-reply">Reply</button>
+																	</a>
+																{% endif %}
+																			
+																<!-- Comment Form -->
+															</div>
+														</div>
+													</div>
+												{% endif %}
+											{% endfor %}
+										</div>
+
+										{% if comment_reply_count.value > 0 %}
+											<button class="comment-view-reply">
+												<!-- Down Image -->
+												View {{ comment_reply_count.value }} replies
+											</button>
+										{% endif %}
+									{% endwith %}
+								</div>
+							</div>
+						{% endif %}
+					{% endfor %}
+				</div>
+			</div>
+		</article>
+	</div>
+
+
+	<!-- Modal -->
+	<div class="modal" style="display: none;">
+		<div class="modal-header">
+			<h5>Delete Post</h5>
+			<button type="button" class="close" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
+		</div>
+		<div class="modal-content">
+			<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+			<form action="{{ url_for('posts.delete_post', post_id=post.id) }}" method="POST">
+				<input type="submit" value="Delete">
+			</form>
+		</div>
+	</div>
+{% endblock %}

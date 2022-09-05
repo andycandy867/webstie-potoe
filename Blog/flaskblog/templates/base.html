@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
+	<script src="{{ url_for('static', filename='main.js') }}" defer></script>
+
+	{% if title %}
+		<title>{{ title }} - Blog</title>
+	{% else %}
+		<title>Blog</title>
+	{% endif %}
+</head>
+<body>
+	<header>
+		<nav class="top-nav">
+			<div class="nav-left">
+				<div class="side-menu-container">
+					<img id="menu-img" draggable="false" height="32" width="32" src="{{ url_for('static', filename='icons/menu.png') }}"/>
+					<div id="side-menu" style="width: 0px;">
+						<a href="{{ url_for('main.home') }}">Home</a>
+						<a href="{{ url_for('main.explore') }}">Explore</a>
+						<a href="#">Random</a>
+						<a href="#">Library</a>
+					</div>
+				</div>
+				<a href="{{ url_for('main.home') }}">Blog</a>
+			</div>
+			<form method="POST" action="{{ url_for('main.search') }}" id="search-container">
+				{{ SearchForm.hidden_tag() }}
+				<input id="search-input" type="search" name="searched" placeholder="Search">
+				<script type="text/javascript">
+					search_input = document.querySelector('#search-input')
+					search_input.setAttribute("value", "{{ searched }}");
+				</script>
+				<button id="submit-button">
+					<img id="search-icon" height="100%" draggable="false" src="{{ url_for('static', filename='icons/search.jpg') }}">
+				</button>
+			</form>
+			<div class="nav-right">
+				{% if current_user.is_authenticated %}
+					<a href="{{ url_for('posts.new_post') }}">New Post</a>
+
+					<div class="dropdown-container">
+						<img id="profile-img" height="32" width="32" draggable="false" src="{{ image_file }}"/>
+						<div id="profile-menu" class="dropdown-menu" style="display: none;">
+							<a href="{{ url_for('users.account') }}">Account</a>
+							<a href="{{ url_for('users.account') }}">Settings</a>
+							<a href="{{ url_for('users.logout') }}">Logout</a>
+						</div>
+					</div>
+				{% else %}
+					<div class="dropdown-container-center">
+						<img id="kebab-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='icons/kebab_menu.png') }}"/>
+						<div id="preferences-menu" class="dropdown-menu" style="display: none;">
+							<a href="{{ url_for('main.about') }}">About</a>
+							<a href="{{ url_for('users.account') }}">Settings</a>
+						</div>
+					</div>
+
+					<a href="{{ url_for('users.signin') }}">
+						<div id="sign-in-button">
+							<img id="sign-in-icon" height="32" width="32" draggable="false" src="{{ url_for('static', filename='profile_pics/default.png') }}">
+							Sign In
+						</div>
+					</a>
+				{% endif %}
+			</div>
+		</nav>
+
+		<nav class="left-nav">
+			<a href="{{ url_for('main.home') }}">				
+				<div>
+					Home
+				</div>
+			</a>
+
+			<a href="{{ url_for('main.explore') }}">
+				<div>
+					Explore
+				</div>
+			</a>
+
+			<a href="#">
+				<div>
+					Random
+				</div>
+			</a>
+
+			<a href="#">
+				<div>
+					Library
+				</div>
+			</a>
+		</nav>
+	</header>
+
+	<main role="main">
+		<!--
+		{% with messages = get_flashed_messages(with_categories=true) %} 
+			{% if messages %} 
+				{% for category, message in messages %} 
+					<div class="error-message-{{ category }}">
+						{{ message }}
+					</div>
+				{% endfor %}
+			{% endif %}
+		{% endwith %}
+		-->
+		
+		{% block body %}
+		{% endblock %}
+	</main>
+</body>
+</html>

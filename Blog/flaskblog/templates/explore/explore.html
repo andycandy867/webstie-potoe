@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block body %}
+	<div id="main-body">
+		<div id="explore-categories-container">
+			<div class="explore-categories">
+				<a id="explore-categories-trending" class="explore-category" href="{{ url_for('main.explore', c='trending') }}">
+					<img src="" height="32" width="32" draggable="false">
+					<span>Trending</span>
+				</a>
+				<a id="explore-categories-most-viewed" class="explore-category" href="{{ url_for('main.explore', c='most-viewed') }}">
+					<img src="" height="32" width="32" draggable="false">
+					<span>Most Viewed</span>
+				</a>
+				<a id="explore-categories-most-liked" class="explore-category" href="{{ url_for('main.explore', c='most-liked') }}">
+					<img src="" height="32" width="32" draggable="false">
+					<span>Most Liked</span>
+				</a>
+				<a id="explore-categories-seek3wl" class="explore-category" href="{{ url_for('main.explore', c='seek3wl') }}">
+					<img src="" height="32" width="32" draggable="false">
+					<span>Seek3wl</span>
+				</a>
+			</div>
+
+			<div class="explore-categories" style="margin-top: 8px;">
+				<a id="explore-categories-trending" class="explore-category" href="{{ url_for('main.explore', c='osu-mania') }}">
+					<img src="" height="32" width="32" draggable="false">
+					<span>Osu Mania</span>
+				</a>
+				<a id="explore-categories-most-viewed" class="explore-category" href="{{ url_for('main.explore', c='programs') }}">
+					<img src="" height="32" width="32" draggable="false">
+					<span>Programs</span>
+				</a>
+				<a id="explore-categories-most-liked" class="explore-category" href="{{ url_for('main.explore', c='guides') }}">
+					<img src="" height="32" width="32" draggable="false">
+					<span>Guides</span>
+				</a>
+				<a id="explore-categories-seek3wl" class="explore-category" href="{{ url_for('main.explore', c='logs') }}">
+					<img src="" height="32" width="32" draggable="false">
+					<span>Logs</span>
+				</a>
+			</div>
+		</div>
+
+		<div id="explore-featured">
+			<div id="explore-featured-header">
+				<h2>Featured Posts</h2>
+			</div>
+			{% for post in featured_posts %}
+				<article class="post-container">
+					<div class="post-header">
+						<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
+						<a href="{{ url_for('users.user_posts', username=post.author.username) }}">
+							{{ post.author.username }}
+						</a>
+					</div>
+
+					<div class="post-title">
+						<a href="{{ url_for('posts.post', post_id=post.id) }}">{{ post.title }}</a>
+						{{ post.date_posted.strftime('%Y-%m-%d') }}					
+					</div>
+
+					<p class="post-content">{{ limit_content[post.id] }}</p>
+				</article>
+			{% endfor %}
+		</div>
+
+		<div id="explore-trending">
+			<div id="explore-trending-header">
+				<h2>Trending Posts</h2>
+			</div>
+			{% for post in trending_posts %}
+				<article class="post-container">
+					<div class="post-header">
+						<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
+						<a href="{{ url_for('users.user_posts', username=post.author.username) }}">
+							{{ post.author.username }}
+						</a>
+					</div>
+
+					<div class="post-title">
+						<a href="{{ url_for('posts.post', post_id=post.id) }}">{{ post.title }}</a>
+						{{ post.date_posted.strftime('%Y-%m-%d') }}
+					</div>
+
+					<p class="post-content">{{ limit_content[post.id] }}</p>
+				</article>
+			{% endfor %}
+		</div>
+	</div>
+{% endblock %}

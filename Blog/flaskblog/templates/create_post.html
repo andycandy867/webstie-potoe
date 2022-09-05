@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block body %}
+	<div id="main-body">
+		<div id="post-container">
+
+			<form id="create-post-form" method="POST" enctype="multipart/form-data" action="{{ url_for('posts.new_post', post_cache_id=post_cache.id) }}">
+				{{ post_form.hidden_tag() }}
+
+				<div id="create-post-header">
+					<legend id="create-post-legend">Create New Post</legend>
+
+					<div id="create-post-insert-container">
+						<button id="create-post-insert-button" type="button">
+							Insert Media
+						</button>
+
+						<div id="create-post-insert-menu" style="">
+							<div id="create-post-insert-import">
+								{% if post_form.file.errors %}
+									<div class="create-post-insert-import-error">
+										{% for error in post_form.file.errors %}
+											{{ error }}
+										{% endfor %}
+									</div>
+								{% endif %}
+
+								{{ post_form.import_file(accept="image/*, video/*") }}
+							</div>
+
+							{% for media in uploaded_media %}
+								<img height="10%" width="10%" src="{{ url_for('static', filename=media.file) }}">
+							{% endfor %}
+
+
+							{{ post_form.file(value="") }}
+
+							{{ post_form.submit_insert(id="create-post-insert-submit-button") }}
+						</div>
+					</div>						
+				</div>
+
+				<div id="new-post-title">
+					<label id="new-post-title-label">Title</label>
+					<!-- Outputs Errors-->
+					{% if post_form.title.errors %}
+						<div class="new-post-form-error">
+							{% for error in post_form.title.errors %}
+								{{ error }}
+							{% endfor %}
+						</div>
+					{% endif %}
+
+					{{ post_form.title(id="new-post-title-input") }}
+				</div>
+
+				<div id="new-post-content">
+					<label id="new-post-content-label">Content</label>
+
+					{% with item = namespace(value=0) %}
+						{% for text in splinted %}
+							{% if is_media(text) %}
+								<img src="{{ url_for('static', filename=rm_suffix(text)) }}">
+								<input type="hidden" name="{{ item.value }}" value="{{ rm_suffix(text) }}">
+							{% else %}
+								<textarea id="new-post-content-input" name="{{ item.value }}">{{ text }}</textarea>
+							{% endif %}
+
+							{% set item.value = item.value + 1 %}
+						{% endfor %}
+					{% endwith %}
+				</div>
+
+				{{ post_form.submit(id="new-post-submit-button") }}
+			</form>
+		</div>	
+	</div>
+{% endblock %}
