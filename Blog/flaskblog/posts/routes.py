@@ -66,7 +66,6 @@ def new_post():
 			else:
 				print('no media so add pls')
 				post_cache.content += items[item_id]
-				print(post_cache.content)
 
 		if post_form.import_file.data:
 			if 'file' not in request.files:
@@ -89,7 +88,6 @@ def new_post():
 				db.session.commit()
 				return redirect(url_for('posts.new_post', post_cache_id=post_cache.id))
 		elif post_form.file.data:
-			print('file select')
 			post_cache.content += f'{{{{{post_form.file.data}{MEDIA_CODE}}}}}' + ' '
 			db.session.commit()
 			return redirect(url_for('posts.new_post', post_cache_id=post_cache.id))
@@ -106,6 +104,16 @@ def new_post():
 			db.session.commit()
 
 		return redirect(url_for('posts.new_post', post_cache_id=post_cache.id))
+
+
+@posts.route("/post/delete_media", methods=['POST'])
+def delete_media():
+	post_cache_id = request.args.get('post_cache_id')
+	media_id = request.args.get('media_id')
+
+	found_media = Media.query.filter_by(user_id=current_user.id, id=media_id).first()
+
+	return redirect(url_for('posts.new_post', post_cache_id=post_cache_id))
 
 
 @posts.route("/post/<int:post_id>")

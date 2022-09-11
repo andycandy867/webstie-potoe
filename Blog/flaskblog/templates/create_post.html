@@ -3,41 +3,46 @@
 {% block body %}
 	<div id="main-body">
 		<div id="post-container">
-
-			<form id="create-post-form" method="POST" enctype="multipart/form-data" action="{{ url_for('posts.new_post', post_cache_id=post_cache.id) }}">
+			<form id="create-post-form" name="create-post-form" method="POST" enctype="multipart/form-data" action="{{ url_for('posts.new_post', post_cache_id=post_cache.id) }}">
 				{{ post_form.hidden_tag() }}
 
 				<div id="create-post-header">
-					<legend id="create-post-legend">Create New Post</legend>
+					<legend style="font-size: 32px;">Create New Post</legend>
 
 					<div id="create-post-insert-container">
 						<button id="create-post-insert-button" type="button">
 							Insert Media
 						</button>
 
-						<div id="create-post-insert-menu" style="">
+						<div id="create-post-insert-menu" style="display: none;">
 							<div id="create-post-insert-import">
-								{% if post_form.file.errors %}
+								{% if post_form.import_file.errors %}
 									<div class="create-post-insert-import-error">
-										{% for error in post_form.file.errors %}
+										{% for error in post_form.import_file.errors %}
 											{{ error }}
 										{% endfor %}
 									</div>
 								{% endif %}
 
 								{{ post_form.import_file(accept="image/*, video/*") }}
+								{{ post_form.submit_insert(id="create-post-insert-submit-button") }}
 							</div>
 
 							{% for media in uploaded_media %}
-								<img height="10%" width="10%" src="{{ url_for('static', filename=media.file) }}">
+								<div class="input-element uploaded-media-container" style="display: flex;">
+									<div class="uploaded-media-options" style="display: none;">
+										<img class="options-opener uploaded-media-options-opener" height="32" width="32" draggable="false" src="{{ url_for('static', filename='icons/kebab_menu.png') }}"/>
+
+										<button id="uploaded-media-remove-{{ uploaded_media.id }}" class="uploaded-media-remove" type="button" style="display: none;">
+											Remove
+										</button>
+									</div>
+
+									<img class="uploaded-media" src="{{ url_for('static', filename=media.file) }}">
+								</div>
 							{% endfor %}
-
-
-							{{ post_form.file(value="") }}
-
-							{{ post_form.submit_insert(id="create-post-insert-submit-button") }}
 						</div>
-					</div>						
+					</div>
 				</div>
 
 				<div id="new-post-title">
@@ -60,10 +65,47 @@
 					{% with item = namespace(value=0) %}
 						{% for text in splinted %}
 							{% if is_media(text) %}
-								<img src="{{ url_for('static', filename=rm_suffix(text)) }}">
-								<input type="hidden" name="{{ item.value }}" value="{{ rm_suffix(text) }}">
+								<div class="input-element inserted-media-container" id="inserted-media-{{ item.value }}">
+									<div class="inserted-media-dropdown-container" style="display: none;">
+										<img class="options-opener inserted-media-dropdown-opener" height="32" width="32" draggable="false" src="{{ url_for('static', filename='icons/kebab_menu.png') }}"/>
+
+										<div class="inserted-media-dropdown" style="display: none;">
+											<div class="inserted-media-height">
+												<label>Height</label>
+												<input type="range" name="height-{{ item.value }}" oninput="this.nextElementSibling.value = this.value + '%'">
+												<output>50%</output>
+											</div>
+											<div class="inserted-media-width">
+												<label>Width</label>
+												<input type="range" name="width-{{ item.value }}" oninput="this.nextElementSibling.value = this.value + '%'">
+												<output>50%</output>
+											</div>
+											<!-- handle with js -->
+											<button class="inserted-media-remove" id="inserted-media-remove-{{ item.value }}">
+												Remove Media
+											</button>
+										</div>
+									</div>
+
+									<img class="inserted-media" src="{{ url_for('static', filename=rm_suffix(text)) }}">
+									<input type="hidden" name="{{ item.value }}" value="{{ rm_suffix(text) }}">
+								</div>
 							{% else %}
-								<textarea id="new-post-content-input" name="{{ item.value }}">{{ text }}</textarea>
+								<div class="input-element" id="textarea-{{ item.value }}">
+									<div class="textarea-dropdown-container" style="display: none;">
+										<img class="options-opener textarea-dropdown-opener" height="32" width="32" draggable="false" src="{{ url_for('static', filename='icons/kebab_menu.png') }}"/>
+
+										<div class="textarea-dropdown" style="display: none;">
+											<!-- bold, italic, h-link, ect -->
+
+											<button class="textarea-remove" id="textarea-remove-{{ item.value }}">
+												Remove Textarea
+											</button>
+										</div>
+									</div>
+
+									<textarea class="create-post-textarea" name="{{ item.value }}">{{ text }}</textarea>
+								</div>
 							{% endif %}
 
 							{% set item.value = item.value + 1 %}
@@ -73,6 +115,9 @@
 
 				{{ post_form.submit(id="new-post-submit-button") }}
 			</form>
-		</div>	
+		</div>
+		<form action="{{ url_for('posts.new_post', post_cache_id=post_cache.id) }}">
+			
+		</form>
 	</div>
 {% endblock %}

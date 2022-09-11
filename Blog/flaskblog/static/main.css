@@ -8,8 +8,8 @@ body {
 }
 
 p, h1, h2, h3, h4, h5, h6 {
-  margin: 0px;
-  padding: 0px;
+	margin: 0px;
+	padding: 0px;
 }
 
 a {
@@ -564,13 +564,9 @@ nav .nav-right {
 	justify-content: space-between;
 }
 
-#create-post-legend {
-	font-size: 32px;
-}
-
 #create-post-insert-container {
 	display: flex;
-	flex-direction: column;
+	justify-content: flex-end;
 }
 
 #create-post-insert-button {
@@ -585,22 +581,50 @@ nav .nav-right {
 }
 
 #create-post-insert-menu {
-	color: #ffffff;
-	background-color: transparent;
+	flex-direction: column;
 
-	margin: 5px 0px;
+	position: absolute;
+
+	max-height: 400px;
+	max-width: 250px;
+
+	overflow-y: scroll;
+	overflow-x: hidden;
+
+	color: #ffffff;
+	background-color: #000000;
+
+	margin: 5px 0;
+	margin-top: 56px;
 	padding: 10px 10px;
 
 	border-radius: 5px;
 	border: 2px solid #d80000;
 }
 
-#create-post-insert-import {
-
+.uploaded-media-options {
+	display: flex;
+	justify-content: flex-end;
 }
 
-.create-post-insert-import-error {
+.uploaded-media-options-opener {
+	position: absolute;
+	right: 8px
+}
 
+.uploaded-media {
+	width: 100%;
+}
+
+.uploaded-media-remove {
+	position: absolute;
+	right: 8px;
+
+	margin-top: 32px;
+	margin-right: 12px;
+
+	background-color: #ff0000;
+	border: 1px groove #949494;
 }
 
 /*
@@ -654,12 +678,62 @@ nav .nav-right {
 	border: none;
 }
 
-#new-post-content-input {
+.inserted-media-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.inserted-media-dropdown-container {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.inserted-media-dropdown-opener {
+	position: absolute;
+	right: 340px;
+
+	margin-top: 8px;
+}
+
+.inserted-media-dropdown {
+	flex-direction: column;
+	align-items: flex-end;
+
+	position: absolute;
+
+	margin-top: 50px;
+	margin-left: 50px;
+}
+
+.inserted-media {
+	align-self: center;
+	height: 50%;
+	width: 50%;
+}
+
+.textarea-dropdown-opener {
+	position: absolute;
+	right: 68px;
+
+	margin-top: 12px;
+}
+
+.textarea-dropdown {
+	position: absolute;
+	right: 68px;
+
+	margin-top: 48px;
+	margin-right: 6px;
+}
+
+.create-post-textarea {
 	color: #ffffff;
 	font-size: 16px;
 	height: 20rem;
 
 	margin-top: 5px;
+	width: 99%;
 
 	background-color: transparent;
 	border: 2px solid #ffffff;
