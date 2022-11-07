@@ -1,8 +1,10 @@
 import re
-from flask import render_template, request, Blueprint, url_for, redirect
-from flask_login import current_user
-from flaskblog.models import Post, User
+from flask import render_template, request, Blueprint, url_for, redirect, make_response, jsonify
+from flask_login import current_user, login_required
+from flaskblog.models import Post, User, PostCache
 from flaskblog.main.forms import SearchForm
+from sqlalchemy.sql.expression import func
+
 
 main = Blueprint('main', __name__)
 
@@ -14,31 +16,43 @@ def inject_template_globals():
 		image_file_2 = current_user.image_file
 	else:
 		image_file_2 = 'default.jpg'
-	return dict(image_file=url_for('static', filename=f'images/profile_pics/{image_file_2}'), SearchForm=SearchForm())
+
+	has_post_cache = False
+	if current_user.is_authenticated:
+		if PostCache.query.filter_by(user_id=current_user.id):
+			has_post_cache = True
+	return dict(image_file=url_for('static', filename=f'images/profile_pics/{image_file_2}'), SearchForm=SearchForm(),
+				has_post_cache=has_post_cache)
+
+
+home_quantity = 7
+home_recommended = []
 
 
 @main.route('/', methods=['GET', 'POST'])
 def home():
-	page = request.args.get('page', 1, type=int)
-	starting_posts = Post.query.order_by(Post.date_posted.desc())
+	starting_posts = Post.query.order_by(Post.date_posted.desc()).limit(50).all()
 
-	limit_content = {}
+	global home_recommended
+	home_recommended = []
 	for post in starting_posts:
-		splinted = re.split('{{|}}', post.content)
+		home_recommended.append(post.as_dict())
 
-		for i, splint in enumerate(splinted):
-			if splint == '':
-				splinted.pop(i)
-			elif '*/#|>' in splint:
-				splinted.pop(i)
+	return render_template('home.html')
 
-		if len(splinted[0].split()) > 17:
-			limit_content[post.id] = splinted[0].split('\n')[0]
+
+@main.route('/load_home')
+def load_home():
+	if request.args:
+		counter = int(request.args.get('c'))
+		if counter == 0:
+			res = make_response(jsonify(home_recommended[0: home_quantity]), 200)
+		elif counter > len(home_recommended) + home_quantity:
+			res = make_response(jsonify({}), 200)
 		else:
-			limit_content[post.id] = splinted[0] + ' ...'
+			res = make_response(jsonify(home_recommended[home_quantity: home_quantity + counter]), 200)
 
-	posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=5)  # Get random or recommended
-	return render_template('home.html', posts=posts, limit_content=limit_content)
+	return res
 
 
 @main.route('/results', methods=['GET', 'POST'])
@@ -77,34 +91,284 @@ def explore():
 	explore_option = request.args.get('c')
 
 	if explore_option == 'trending':
-		return render_template('/explore/trending.html', title='Trending')
+		trending_posts = Post.query.order_by(Post.views.desc()).limit(50).all()
+
+		limit_content = {}
+		for post in trending_posts:
+			splinted = re.split('{{|}}', post.content)
+
+			for i, splint in enumerate(splinted):
+				if splint == '':
+					splinted.pop(i)
+				elif '*/#|>' in splint:
+					splinted.pop(i)
+
+			if len(splinted[0].split()) > 17:
+				limit_content[post.id] = splinted[0].split('\n')[0]
+			else:
+				limit_content[post.id] = splinted[0] + '...'
+
+		return render_template('/explore/trending.html', title='Trending', trending_posts=trending_posts,
+							   limit_content=limit_content)
 	elif explore_option == 'most-viewed':
-		return render_template('/explore/most_viewed.html', title='Most Viewed')
+		most_viewed_posts = Post.query.order_by(Post.views.desc()).limit(50).all()
+
+		limit_content = {}
+		for post in most_viewed_posts:
+			splinted = re.split('{{|}}', post.content)
+
+			for i, splint in enumerate(splinted):
+				if splint == '':
+					splinted.pop(i)
+				elif '*/#|>' in splint:
+					splinted.pop(i)
+
+			if len(splinted[0].split()) > 17:
+				limit_content[post.id] = splinted[0].split('\n')[0]
+			else:
+				limit_content[post.id] = splinted[0] + '...'
+
+		return render_template('/explore/most_viewed.html', title='Most Viewed',
+							   most_viewed_posts=most_viewed_posts, limit_content=limit_content)
 	elif explore_option == 'most-liked':
-		return render_template('/explore/most_liked.html', title='Most Liked')
+		most_liked_posts = Post.query.order_by(Post.likes.asc()).limit(50).all()
+
+		most_liked_posts.reverse()
+
+		limit_content = {}
+		for post in most_liked_posts:
+			splinted = re.split('{{|}}', post.content)
+
+			for i, splint in enumerate(splinted):
+				if splint == '':
+					splinted.pop(i)
+				elif '*/#|>' in splint:
+					splinted.pop(i)
+
+			if len(splinted[0].split()) > 17:
+				limit_content[post.id] = splinted[0].split('\n')[0]
+			else:
+				limit_content[post.id] = splinted[0] + '...'
+
+		return render_template('/explore/most_liked.html', title='Most Liked', most_liked_posts=most_liked_posts,
+							   limit_content=limit_content)
 	elif explore_option == 'seek3wl':
-		return render_template('/explore/seek3wl.html', title='Seek3wl')
+		seek3wl = User.query.filter_by(username='seek3wl').first()
+		seek3wl_posts = Post.query.filter_by(user_id=seek3wl.id).all()
+
+		limit_content = {}
+		for post in seek3wl_posts:
+			splinted = re.split('{{|}}', post.content)
+
+			for i, splint in enumerate(splinted):
+				if splint == '':
+					splinted.pop(i)
+				elif '*/#|>' in splint:
+					splinted.pop(i)
+
+			if len(splinted[0].split()) > 17:
+				limit_content[post.id] = splinted[0].split('\n')[0]
+			else:
+				limit_content[post.id] = splinted[0] + '...'
+		return render_template('/explore/seek3wl.html', title='Seek3wl', seek3wl_posts=seek3wl_posts,
+							   limit_content=limit_content)
 	elif explore_option == 'osu-mania':
 		return render_template('/explore/osu_mania.html', title='Osu Mania')
-	elif explore_option == 'programs':
-		return render_template('/explore/programs.html', title='Programs')
-	elif explore_option == 'guides':
-		return render_template('/explore/guides.html', title='Guides')
-	elif explore_option == 'logs':
-		return render_template('/explore/logs.html', title='Logs')
 	else:
 		featured_posts = Post.query.order_by(Post.views.desc())[0:3]
 		trending_posts = Post.query.order_by(Post.views.desc())[0:30]
 
 		limit_content = {}
 		for post in featured_posts + trending_posts:
-			if len(post.content.split()) > 17:
-				limit_content[post.id] = post.content.split('\n')[0]
+			splinted = re.split('{{|}}', post.content)
+
+			for i, splint in enumerate(splinted):
+				if splint == '':
+					splinted.pop(i)
+				elif '*/#|>' in splint:
+					splinted.pop(i)
+
+			if len(splinted[0].split()) > 17:
+				limit_content[post.id] = splinted[0].split('\n')[0]
 			else:
-				limit_content[post.id] = post.content
+				limit_content[post.id] = splinted[0] + '...'
 
 		return render_template('/explore/explore.html', title='Explore', featured_posts=featured_posts,
-							   limit_content=limit_content, trending_posts=trending_posts)
+							   trending_posts=trending_posts, limit_content=limit_content)
+
+
+@main.route('/random')
+def random():
+	post = Post.query.order_by(func.random()).first()
+	return redirect(url_for('posts.post', post_id=post.id))
+
+
+@main.route('/library')
+@login_required
+def library():
+	historical_posts = current_user.posts_viewed
+	historical_posts_count = len(historical_posts) - 3
+	historical_posts.reverse()
+	historical_posts = historical_posts[:3]
+
+	historical_posts_limit_content = {}
+	for historical_post in historical_posts:
+		splinted = re.split('{{|}}', historical_post.content)
+
+		for i, splint in enumerate(splinted):
+			if splint == '':
+				splinted.pop(i)
+			elif '*/#|>' in splint:
+				splinted.pop(i)
+
+		if len(splinted[0].split()) > 17:
+			historical_posts_limit_content[historical_post.id] = splinted[0].split('\n')[0]
+		else:
+			historical_posts_limit_content[historical_post.id] = splinted[0] + '...'
+
+	liked_posts = current_user.posts_liked
+	liked_posts_count = len(liked_posts) - 3
+	liked_posts.reverse()
+	liked_posts = liked_posts[:3]
+
+	liked_posts_limit_content = {}
+	for liked_post in liked_posts:
+		splinted = re.split('{{|}}', liked_post.content)
+
+		for i, splint in enumerate(splinted):
+			if splint == '':
+				splinted.pop(i)
+			elif '*/#|>' in splint:
+				splinted.pop(i)
+
+		if len(splinted[0].split()) > 17:
+			liked_posts_limit_content[liked_post.id] = splinted[0].split('\n')[0]
+		else:
+			liked_posts_limit_content[liked_post.id] = splinted[0] + '...'
+
+	created_posts = Post.query.filter_by(user_id=current_user.id).order_by(Post.date_posted.desc()).all()
+	created_posts_count = len(created_posts) - 3
+	created_posts = created_posts[:3]
+
+	created_posts_limit_content = {}
+	for created_post in created_posts:
+		splinted = re.split('{{|}}', created_post.content)
+
+		for i, splint in enumerate(splinted):
+			if splint == '':
+				splinted.pop(i)
+			elif '*/#|>' in splint:
+				splinted.pop(i)
+
+		if len(splinted[0].split()) > 17:
+			created_posts_limit_content[created_post.id] = splinted[0].split('\n')[0]
+		else:
+			created_posts_limit_content[created_post.id] = splinted[0] + '...'
+
+	return render_template('library.html', title='Library', historical_posts=historical_posts,
+						   historical_posts_limit_content=historical_posts_limit_content,
+						   historical_posts_count=historical_posts_count, liked_posts=liked_posts,
+						   liked_posts_limit_content=liked_posts_limit_content,
+						   liked_posts_count=liked_posts_count, created_posts=created_posts,
+						   created_posts_limit_content=created_posts_limit_content, created_posts_count=created_posts_count)
+
+
+@main.route('/following')
+@login_required
+def following():
+	followed_users = current_user.following
+
+	followed_users_posts_count = {}
+	for user in current_user.following:
+		followed_users_posts_count[user.id] = len(Post.query.filter_by(user_id=user.id).all())
+
+	followed_users_posts = []
+	for user in current_user.following:
+		followed_users_posts += Post.query.filter_by(user_id=user.id).all()
+
+	limit_content = {}
+	for following_user_post in followed_users_posts:
+		splinted = re.split('{{|}}', following_user_post.content)
+
+		for i, splint in enumerate(splinted):
+			if splint == '':
+				splinted.pop(i)
+			elif '*/#|>' in splint:
+				splinted.pop(i)
+
+		if len(splinted[0].split()) > 17:
+			limit_content[following_user_post.id] = splinted[0].split('\n')[0]
+		else:
+			limit_content[following_user_post.id] = splinted[0] + '...'
+
+	return render_template('following.html', title='Followed', followed_users=followed_users,
+						   followed_users_posts=followed_users_posts,
+						   followed_users_posts_count=followed_users_posts_count,
+						   limit_content=limit_content)
+
+
+history_quantity = 7
+history_recommended = []
+
+
+@main.route('/history')
+@login_required
+def history():
+	history_posts = current_user.posts_viewed
+	history_posts.reverse()
+
+	global history_recommended
+	history_recommended = []
+	for post in history_posts:
+		history_recommended.append(post.as_dict())
+
+	return render_template('history.html', title='History')
+
+
+@main.route('/load_history')
+def load_history():
+	if request.args:
+		counter = int(request.args.get('c'))
+		if counter == 0:
+			res = make_response(jsonify(history_recommended[0: history_quantity]), 200)
+		elif counter > len(history_recommended) + history_quantity:
+			res = make_response(jsonify({}), 200)
+		else:
+			res = make_response(jsonify(history_recommended[history_quantity: history_quantity + counter]), 200)
+
+	return res
+
+
+liked_quantity = 7
+liked_recommended = []
+
+
+@main.route('/liked')
+@login_required
+def liked():
+	liked_posts = current_user.posts_liked
+	liked_posts.reverse()
+
+	global liked_recommended
+	liked_recommended = []
+	for post in liked_posts:
+		liked_recommended.append(post.as_dict())
+
+	return render_template('liked.html', title='Liked')
+
+
+@main.route('/load_liked')
+def load_liked():
+	if request.args:
+		counter = int(request.args.get('c'))
+		if counter == 0:
+			res = make_response(jsonify(liked_recommended[0: liked_quantity]), 200)
+		elif counter > len(liked_recommended) + liked_quantity:
+			res = make_response(jsonify({}), 200)
+		else:
+			res = make_response(jsonify(liked_recommended[liked_quantity: liked_quantity + counter]), 200)
+
+	return res
 
 
 @main.route('/about')

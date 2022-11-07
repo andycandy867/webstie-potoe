@@ -3,11 +3,11 @@
 {% block body %}
 	<div id="main-body">
 		<div id="post-container">
-			<form id="create-post-form" name="create-post-form" method="POST" enctype="multipart/form-data" action="{{ url_for('posts.new_post', post_cache_id=post_cache_id) }}">
+			<form id="create-post-form" name="create-post-form" method="POST" enctype="multipart/form-data" action="{{ url_for('posts.update_post', post_id=post_id) }}">
 				{{ post_form.hidden_tag() }}
 
 				<div id="create-post-header">
-					<legend style="font-size: 32px;">Create New Post</legend>
+					<legend style="font-size: 32px;">Update Post</legend>
 
 					<div id="create-post-insert-container">
 						<button id="create-post-insert-button" type="button">
@@ -125,8 +125,11 @@
 						{{ post_form.add_empty(id='add-textarea', value='[+] Add Textarea') }}
 					{% endif %}
 				</div>
-
-				{{ post_form.submit(id="new-post-submit-button") }}
+				<div>
+					<button type="button" id="update-post-cancel-button" onclick="redirect(`{{ url_for('posts.post', post_id=post_id)|unquote }}`)">Cancel</button>
+					
+					{{ post_form.submit(id="update-post-submit-button") }}
+				</div>
 			</form>
 		</div>
 	</div>

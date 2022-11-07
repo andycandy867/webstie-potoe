@@ -1,3 +1,4 @@
+import re
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
@@ -44,20 +45,30 @@ def create_app(config_class=Config):
 	@app.template_global()
 	def is_media(splinted):
 		if '*/#|>' in splinted:
-			return True
+			return 'Yes'
+		elif splinted == ':*EMPTY*:':
+			return 'Empty'
 		else:
 			return False
 
 	@app.template_global()
+	def get_media_size(splinted):
+		searched = re.search(r'(?<=\|:)(.*?)(?=\s*:\|)', splinted)
+		return searched.group()
+
+	@app.template_global()
 	def rm_suffix(string):
-		return string.removesuffix('*/#|>')
+		suffix_gone = string.removesuffix('*/#|>')
+		return suffix_gone.split('|:')[0]
 
 	from flaskblog.main.routes import main
 	from flaskblog.users.routes import users
+	from flaskblog.settings.routes import settings
 	from flaskblog.posts.routes import posts
 	from flaskblog.errors.handlers import errors
 	app.register_blueprint(main)
 	app.register_blueprint(users)
+	app.register_blueprint(settings)
 	app.register_blueprint(posts)
 	app.register_blueprint(errors)
 
