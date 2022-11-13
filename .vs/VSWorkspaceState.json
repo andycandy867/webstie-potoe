@@ -1,7 +1,8 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\Blog"
   ],
-  "SelectedNode": "\\C:\\github\\webstie-potoe",
+  "SelectedNode": "\\Blog\\application.py",
   "PreviewInSolutionExplorer": false
 }
