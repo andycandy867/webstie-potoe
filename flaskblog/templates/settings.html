@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block body %}
+	<div style="display: flex;">
+		<nav id="settings-nav">
+			<div>
+				<h1>Settings</h1>
+			</div>
+
+			<a href="{{ url_for('settings.account') }}">
+				<div>
+					<i class="fa fa-user" aria-hidden="true"></i>
+					Account
+				</div>
+			</a>
+
+			<a href="{{ url_for('settings.main_settings') }}">
+				<div id="selected-settings-nav">
+					<i class="fa fa-cog" aria-hidden="true"></i>
+					Settings
+				</div>
+			</a>
+		</nav>
+
+		<div id="settings-main">
+			<h1>Settings</h1>
+		</div>
+	</div>
+{% endblock %}

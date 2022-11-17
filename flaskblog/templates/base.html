@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	<script src="{{ url_for('static', filename='main.js') }}" defer></script>
+
+	{% if title %}
+		<title>{{ title }} - Blog</title>
+	{% else %}
+		<title>Blog</title>
+	{% endif %}
+</head>
+<body>
+	<header>
+		<nav class="top-nav">
+			<div class="nav-left">
+				<div class="side-menu-container">
+					<i id="menu-img" class="fa fa-bars"></i>
+					<div id="side-menu" style="width: 0px; display: none;">
+						<div class="side-menu-div">
+							<a href="{{ url_for('main.home') }}">
+								<i class="fa fa-home"></i>
+								<span>Home</span>
+							</a>
+							<a href="{{ url_for('main.explore') }}">
+								<i class="fa fa-compass"></i>
+								<span>Explore</span>
+							</a>
+							<a href="{{ url_for('main.random') }}">
+								<i class="fa fa-random"></i>
+								<span>Random</span>
+							</a>
+							<a href="{{ url_for('main.following') }}">
+								<i class="fa fa-user-circle-o"></i>
+								<span>Following</span>
+							</a>
+						</div>
+						<div class="side-menu-div">
+							<a href="{{ url_for('main.library') }}">
+								<i class="fa fa-book"></i>
+								<span>Library</span>
+							</a>
+							<a href="{{ url_for('main.history') }}">
+								<i class="fa fa-history"></i>
+								<span>History</span>
+							</a>
+							<a href="{{ url_for('main.liked') }}">
+								<i class="fa fa-thumbs-up"></i>
+								<span>Liked</span>
+							</a>
+							<a href="{{ url_for('collections.collection', list='RL') }}">
+								<i class="fa fa-clock-o"></i>
+								<span>Read Later</span>
+							</a>
+							<a href="{{ url_for('collections.collection', list='archived') }}">
+								<i class="fa fa-bookmark"></i>
+								<span>Archived</span>
+							</a>
+							{% if length(current_user.collections) > 2 %}
+								<button id="expand">
+									<i class="fa fa-angle-down"></i>
+									<span>Show More</span>
+								</button>
+
+								<div id="expanded">
+									{% for collection in current_user.collections %}
+										{% if not collection.type %}
+											<a href="{{ url_for('collections.collection', list=collection.id) }}">
+												<i class="fa fa-list"></i>
+												<span>{{ collection.name }}</span>
+											</a>
+										{% endif %}
+									{% endfor %}
+								</div>
+							{% endif %}
+						</div>
+						{% if current_user.following %}
+							<div class="side-menu-div">
+								<h4>Following</h4>
+								{% for user in current_user.following %}
+									<a href="{{ url_for('users.user_page', username=user.username) }}">
+										<img height="32px" width="32px" src="{{ url_for('static', filename='images/profile_pics/' + user.image_file) }}">
+										<span>{{ user.username }}</span>
+									</a>
+								{% endfor %}
+							</div>
+						{% endif %}
+					</div>
+				</div>
+				<a href="{{ url_for('main.home') }}">Blog</a>
+			</div>
+			<form method="POST" action="{{ url_for('main.search') }}" id="search-container">
+				{{ SearchForm.hidden_tag() }}
+				<input id="search-input" type="search" name="searched" placeholder="Search">
+				<script type="text/javascript">
+					search_input = document.querySelector('#search-input')
+					search_input.setAttribute("value", "{{ searched }}");
+				</script>
+				<button id="search-button">
+					<i id="search-icon" class="fa fa-search"></i>
+				</button>
+			</form>
+			<div class="nav-right">
+				{% if current_user.is_authenticated %}
+					{% if has_post_cache %}
+						<a href="{{ url_for('posts.post_caches') }}">Create Post</a>
+					{% else %}
+						<a href="{{ url_for('posts.new_post') }}">Create Post</a>
+					{% endif %}
+
+					<div class="dropdown-container">
+						<img id="profile-img" height="32" width="32" draggable="false" src="{{ image_file }}"/>
+						<div id="profile-menu" class="dropdown-menu" style="display: none;">
+							<a href="{{ url_for('users.user_page', username=current_user.username) }}">Account</a>
+							<a href="{{ url_for('settings.account') }}">Settings</a>
+							<a href="{{ url_for('users.logout') }}">Logout</a>
+						</div>
+					</div>
+				{% else %}
+					<div class="dropdown-container-center">
+						<img id="kebab-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='icons/kebab_menu.png') }}"/>
+						<div id="preferences-menu" class="dropdown-menu" style="display: none;">
+							<a href="{{ url_for('main.about') }}">About</a>
+							<a href="{{ url_for('settings.main_settings') }}">Settings</a>
+						</div>
+					</div>
+
+					<a href="{{ url_for('users.signin') }}">
+						<div id="sign-in-button">
+							<img id="sign-in-icon" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/default.png') }}">
+							Sign In
+						</div>
+					</a>
+				{% endif %}
+			</div>
+		</nav>
+
+		<nav class="left-nav">
+			<a href="{{ url_for('main.home') }}">		
+				<div>
+					<i class="fa fa-home"></i>
+					Home
+				</div>
+			</a>
+			<a href="{{ url_for('main.explore') }}">
+				<div>
+					<i class="fa fa-compass"></i>
+					Explore
+				</div>
+			</a>
+			<a href="{{ url_for('main.random') }}">
+				<div>
+					<i class="fa fa-random"></i>
+					Random
+				</div>
+			</a>
+			<a href="{{ url_for('main.following') }}">
+				<div>
+					<i class="fa fa-user-circle-o"></i>
+					Following
+				</div>
+			</a>
+			<a href="{{ url_for('main.library') }}">
+				<div>
+					<i class="fa fa-book"></i>
+					Library
+				</div>
+			</a>
+		</nav>
+	</header>
+
+	<main role="main">
+		{% block errors %}
+		{% endblock %}
+		
+		{% with messages = get_flashed_messages(with_categories=true) %} 
+			{% if messages %} 
+				{% for category, message in messages %} 
+					<div class="message message-{{ category }}">
+						<span class="message-closer">✖</span>
+						<span>{{ message }}</span>
+					</div>
+				{% endfor %}
+			{% endif %}
+		{% endwith %}
+
+		{% block body %}
+		{% endblock %}
+	</main>
+</body>
+</html>
