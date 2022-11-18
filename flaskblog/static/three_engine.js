@@ -5,7 +5,6 @@ import Stats from 'three/addons/libs/stats.module.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 import {Octree} from 'three/addons/math/Octree.js';
-import {OctreeHelper} from 'three/addons/helpers/OctreeHelper.js';
 
 import {Capsule} from 'three/addons/math/Capsule.js';
 
@@ -14,13 +13,23 @@ import {GUI} from 'three/addons/libs/lil-gui.module.min.js';
 const clock = new THREE.Clock();
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x88ccee);
-scene.fog = new THREE.Fog(0x88ccee, 0, 50);
+const texture_loader = new THREE.CubeTextureLoader();
+const texture = texture_loader.load([
+	'/static/resources/skybox/dabomb.jpg',
+	'/static/resources/skybox/dabomb.jpg',
+	'/static/resources/skybox/dabomb.jpg',
+	'/static/resources/skybox/dabomb.jpg',
+	'/static/resources/skybox/dabomb.jpg',
+	'/static/resources/skybox/dabomb.jpg',
+]);
 
-const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+scene.background = texture;
+// scene.background = new THREE.Color(0xffffff);
+
+const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 100);
 camera.rotation.order = 'YXZ';
 
-const fillLight1 = new THREE.HemisphereLight(0x4488bb, 0x002244, 0.5);
+const fillLight1 = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.5);
 fillLight1.position.set(2, 1, 1);
 scene.add(fillLight1);
 
@@ -104,9 +113,15 @@ const loader = new GLTFLoader()
 
 const debugg = document.querySelector('#debugger')
 
+let wave = 1
+let enemies_remaining = 5
+let wave_maps = {}
+let wave_enemy_spawn_locations = {}
+
 const raycaster = new THREE.Raycaster();
 
 const bullet_point = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({color: 0xffff00}))
+bullet_point.name = 'bullet_point'
 scene.add(bullet_point)
 
 // Returns a Promise that resolves after "ms" Milliseconds
@@ -132,10 +147,10 @@ function cast_ray() {
 	let hit_enemies_id = []
 	if (intersects) {
 		for (var i = 0; i < intersects.length; i++) {
-			if (!(hit_enemies_id.includes(intersects[i].object.parent.id)) && intersects[i].object.parent.name == 'enemy') {
+			if (!(hit_enemies_id.includes(intersects[i].object.parent.id)) && intersects[i].object.parent.name == 'enemy' && final_intersects.length <= 3) {
 				final_intersects.push(intersects[i])
 				hit_enemies_id.push(intersects[i].object.parent.id)
-			} else {
+			} else if (!(intersects[i].object.name == 'bullet_point')) {
 				final_intersects.push(intersects[i])
 				break
 			}
@@ -219,6 +234,30 @@ function alt_fire() {
 		scene.add(mesh)
 
 		bullet_point.position.copy(intersects[intersects.length - 1].point)
+
+		let hit_enemies = []
+		for (var i = 0; i < intersects.length; i++) {
+			if (intersects[i].object.parent.name == 'enemy') {
+				let enemy = enemies.find(enemy => enemy.id == intersects[i].object.parent.id);
+				hit_enemies.push(enemy)
+			}
+		}
+
+		if (hit_enemies.length > 0) {
+			let hit_count = 3
+			i = 0
+			while (hit_count >= 0) {
+				if (!hit_enemies[i]) {
+					i = 0
+					continue
+				}
+
+				hit_count -= 1
+				hit_enemies[i].take_damage(1)
+				i++
+			}
+		}
+
 		animation.play().reset()
 
 		window.setTimeout(() => {
@@ -232,7 +271,20 @@ function alt_fire() {
 	carrot_blaster_recharge()
 }
 
+let invulnerable = false
 let hp = 100
+const death_screen = document.querySelector('#death-screen')
+const hp_count = document.querySelector('#health_bar_count')
+const hp_bar = document.querySelector('#health_bar_progress')
+function update_hp() {
+	hp_count.innerHTML = hp
+	hp_bar.style.width = `${hp}%`
+
+	if (hp <= 0) {
+		death_screen.style.display = 'flex'
+		// Player Death
+	}
+}
 let carrot_blaster_model = null
 let carrot_blaster_debounce = true
 let carrot_blaster_alt_debounce = true
@@ -290,6 +342,7 @@ document.addEventListener('keydown', (event) => {
 			if (dash_debounce && !sliding) {
 				if (!keyStates['KeyF'] && stamina >= 1) {
 					dash_debounce = false;
+					invulnerable = true;
 					stamina -= 1
 					update_stamina()
 					playerVelocity.x *= 0.2718;
@@ -342,62 +395,65 @@ document.addEventListener('keydown', (event) => {
 						playerVelocity.x *= 0.2718
 						playerVelocity.z *= 0.2718
 						dash_debounce = true
+						invulnerable = false
 					}, 150)
 				}
 			}
 			break
 		case 'KeyC':
-			if (!playerOnFloor && !keyStates['KeyC']) {
-				if (!sliding) {
-					if (!slam && stamina >= 1) {
-						slam = true
-						stamina -= 1
-						update_stamina()
-						playerVelocity.y = -25
-					}
-				} else {
-					sliding = true
-				}
-			} else if (sliding == false) {
-				sliding = true
-
-				if (Math.abs(getForwardVector().x) < 1 || Math.abs(getForwardVector().z) < 1 || Math.abs(getSideVector().x) < 1 || Math.abs(getSideVector().z) < 1) {
-					if (keyStates['KeyW']) {
-						if (keyStates['KeyA']) {
-							playerVelocity.add(getForwardVector().multiplyScalar(8 * (1 - 0.2718)));
-							playerVelocity.add(getSideVector().multiplyScalar(-8 * (1 - 0.2718)));
+			if (!keyStates['KeyC']) {
+				if (!playerOnFloor) {
+					if (!sliding) {
+						if (!slam && stamina >= 1) {
+							slam = true
+							stamina -= 1
+							update_stamina()
+							playerVelocity.y = -25
 						}
-
-						if (keyStates['KeyD']) {
-							playerVelocity.add(getForwardVector().multiplyScalar(8 * (1 - 0.2718)));
-							playerVelocity.add(getSideVector().multiplyScalar(8 * (1 - 0.2718)));
-						}
-
-						if (!keyStates['KeyA'] && !keyStates['KeyD']) {
-							playerVelocity.add(getForwardVector().multiplyScalar(8));
-						}
-					} else if (keyStates['KeyS']) {
-						if (keyStates['KeyA']) {
-							playerVelocity.add(getForwardVector().multiplyScalar(-8 * (1 - 0.2718)));
-							playerVelocity.add(getSideVector().multiplyScalar(-8 * (1 - 0.2718)));
-						}
-
-						if (keyStates['KeyD']) {
-							playerVelocity.add(getForwardVector().multiplyScalar(-8 * (1 - 0.2718)));
-							playerVelocity.add(getSideVector().multiplyScalar(8 * (1 - 0.2718)));
-						}
-
-						if (!keyStates['KeyA'] && !keyStates['KeyD']) {
-							playerVelocity.add(getForwardVector().multiplyScalar(-8));
-						}
-					} else if (keyStates['KeyA']) {
-						if (!keyStates['KeyD']) {
-							playerVelocity.add(getSideVector().multiplyScalar(-8));
-						}
-					} else if (keyStates['KeyD']) {
-						playerVelocity.add(getSideVector().multiplyScalar(8));
 					} else {
-						playerVelocity.add(getForwardVector().multiplyScalar(8))
+						sliding = true
+					}
+				} else if (sliding == false) {
+					sliding = true
+
+					if (Math.abs(getForwardVector().x) < 1 || Math.abs(getForwardVector().z) < 1 || Math.abs(getSideVector().x) < 1 || Math.abs(getSideVector().z) < 1) {
+						if (keyStates['KeyW']) {
+							if (keyStates['KeyA']) {
+								playerVelocity.add(getForwardVector().multiplyScalar(8 * (1 - 0.2718)));
+								playerVelocity.add(getSideVector().multiplyScalar(-8 * (1 - 0.2718)));
+							}
+
+							if (keyStates['KeyD']) {
+								playerVelocity.add(getForwardVector().multiplyScalar(8 * (1 - 0.2718)));
+								playerVelocity.add(getSideVector().multiplyScalar(8 * (1 - 0.2718)));
+							}
+
+							if (!keyStates['KeyA'] && !keyStates['KeyD']) {
+								playerVelocity.add(getForwardVector().multiplyScalar(8));
+							}
+						} else if (keyStates['KeyS']) {
+							if (keyStates['KeyA']) {
+								playerVelocity.add(getForwardVector().multiplyScalar(-8 * (1 - 0.2718)));
+								playerVelocity.add(getSideVector().multiplyScalar(-8 * (1 - 0.2718)));
+							}
+
+							if (keyStates['KeyD']) {
+								playerVelocity.add(getForwardVector().multiplyScalar(-8 * (1 - 0.2718)));
+								playerVelocity.add(getSideVector().multiplyScalar(8 * (1 - 0.2718)));
+							}
+
+							if (!keyStates['KeyA'] && !keyStates['KeyD']) {
+								playerVelocity.add(getForwardVector().multiplyScalar(-8));
+							}
+						} else if (keyStates['KeyA']) {
+							if (!keyStates['KeyD']) {
+								playerVelocity.add(getSideVector().multiplyScalar(-8));
+							}
+						} else if (keyStates['KeyD']) {
+							playerVelocity.add(getSideVector().multiplyScalar(8));
+						} else {
+							playerVelocity.add(getForwardVector().multiplyScalar(8))
+						}
 					}
 				}
 			}
@@ -460,18 +516,19 @@ class Enemy {
 		loader.load(`${model}`, (gltf) => {
 			this.id = gltf.scene.id
 			this.mesh = gltf.scene
+			this.collider = new Capsule(new THREE.Vector3(0, 0.35, 0), new THREE.Vector3(0, 1, 0), 0.35);
+			this.collider.translate(new THREE.Vector3(5, 5, 5));
+			this.velocity = new THREE.Vector3()
 
 			this.mesh.scale.setScalar(4)
-			this.mesh.position.set(new THREE.Vector3(1, 1, 1))
 			this.mesh.name = 'enemy'
 			scene.add(gltf.scene)
 		})
 
-		this.collider = new Capsule(new THREE.Vector3(0, 0.35, 0), new THREE.Vector3(0, 1, 0), 0.35);
-		this.velocity = new THREE.Vector3()
 		this.on_floor = false
 		this.hp = hp
-		this.attacking = false
+		this.attack_debounce = true
+		this.attack_cooldown = 500
 	}
 
 	take_damage(dmg) {
@@ -484,16 +541,15 @@ class Enemy {
 	}
 
 	async attack() {
-		/*
-		if (attacking == true) {
+		if (!invulnerable) {
 			hp -= 5
-			await timer(100)
+
+			update_hp()
 		}
-		*/
 	}
 }
 
-let enemies = [new Enemy('Fries.glb', 3)]
+let enemies = [/*new Enemy('Fries.glb', 1)*/]
 
 window.addEventListener('resize', onWindowResize);
 
@@ -717,14 +773,22 @@ function update_enemies(delta_time) {
 
 		enemy.velocity.addScaledVector(enemy.velocity, damping);
 
-		/*
-		let distance = new THREE.Vector3(playerCollider.end.x, 0, playerCollider.end.z).distanceTo(new THREE.Vector3(enemy.collider.end.x, 0, enemy.collider.end.z))
-		if (distance < 0.5) {
+		// edit in future (raycast instead of just this to player camera)
+		let distance = new THREE.Vector3(playerCollider.end.x, playerCollider.end.y, playerCollider.end.z).distanceTo(new THREE.Vector3(enemy.collider.end.x, 0, enemy.collider.end.z))
+		if (distance < 1.5) {
 			enemy.velocity = new THREE.Vector3(0, 0, 0)
-			enemy.attacking = true
-			enemy.attack()
+
+			if (enemy.attack_debounce) {
+				enemy.attack_debounce = false
+				enemy.attack()
+
+				window.setTimeout(() => {
+					enemy.attack_debounce = true
+				}, enemy.attack_cooldown)
+			}
+
+			return
 		}
-		*/
 
 		const deltaPosition = enemy.velocity.clone().multiplyScalar(delta_time);
 		enemy.collider.translate(deltaPosition);
@@ -818,7 +882,6 @@ function teleportPlayerIfOob() {
 	if (camera.position.y <= - 25) {
 		playerCollider.start.set(0, 0.35, 0);
 		playerCollider.end.set(0, 1, 0);
-		playerCollider.radius = 0.35;
 		camera.position.copy(playerCollider.end);
 		camera.rotation.set(0, 0, 0);
 	}
@@ -834,11 +897,12 @@ function regen_stamina() {
 }
 
 loader.setPath('/static/resources/models/maps/');
-loader.load('collision-world.glb', (gltf) => {
+loader.load('map_3_5.glb', (gltf) => {
 	scene.add(gltf.scene);
 
 	worldOctree.fromGraphNode(gltf.scene);
 
+	/*
 	gltf.scene.traverse(child => {
 		if (child.isMesh) {
 			child.castShadow = true;
@@ -849,16 +913,7 @@ loader.load('collision-world.glb', (gltf) => {
 			}
 		}
 	});
-
-	const helper = new OctreeHelper(worldOctree);
-	helper.visible = false;
-	//scene.add(helper);
-
-	const gui = new GUI({width: 200});
-	gui.add({debug: false}, 'debug')
-		.onChange(function (value) {
-			helper.visible = value;
-		});
+	*/
 });
 
 let mixer

@@ -11,12 +11,18 @@
 	<div id="container">
 		<img id="crosshair" class="hidden" style="display: block;" src="/static/resources/images/crosshair.png">
 
+		<div id="header">
+			<span id="wave-count">Wave - [1]</span>
+			<span id="enemies-remaining">Enemies Remaining - [34]</span>
+		</div>
+
 		<div id="carrot_blaster_recharge">
 			<img id="carrot_blaster_battery" src="/static/resources/images/green_battery.png">
 			<div id="carrot_blaster_charge_container">
 				<div id="carrot_blaster_charge" style="width: 0%;"></div>
 			</div>
 		</div>
+
 		<div id="stats">
 			<div id="health_bar">
 				<div id="health_bar_progress">
@@ -35,6 +41,22 @@
 				</div>
 			</div>
 		</div>
+
+		<div id="info-card" style="display: none;">
+			<h1 id="info-card-title">Carrots</h1>
+			<p id="info-card-body">Carrots are known for their vitamin-C, and can be extremely good for your body.</p>
+		</div>
+
+		<div id="controls" style="display: flex;">
+			<span>[W/A/S/D] - Move</span>
+			<span>[Mouse] - Look Around</span>
+			<span>[Space] - Jump / Double Jump</span>
+			<span>[F] - Dash</span>
+			<span>[C] - Slam / Slide</span>
+			<span>[LeftClick] - Shoot</span>
+			<span>[RightClick] - Charge Special Attack</span>
+			<span>[H] - Hide This Menu</span>
+		</div>
 	</div>
 
 	<!-- Import maps polyfill -->
@@ -52,49 +74,54 @@
 
 	<script type="module" src="/static/three_engine.js"></script>
 
-	<div id="title-screen" style="display: none;">
-		<span class="fade-in-text">3LIMINADE</span>
-		<span class="hidden">Health Project</span>
-		<span class="hidden">By Andrew C.</span>
-		<span class="hidden">(It is highly recommended to play with keyboard and mouse)</span>
-		<button id="play-button" class="hidden">PLAY</button>
+	<div id="death-screen" style="display: none;">
+		<span>You Are Dead</span>
+		<img src="/static/resources/images/skull.jpg">
+		<span>Press [R] To Restart</span>
+	</div>
+
+	<div id="title-screen">
+		<div id="before-title">
+			<span>Hi Teacher</span>
+			<span class="red-text">(It is highly recommended to play with keyboard and mouse)</span>
+			<p>I have realized at some point that the game may be too difficult for you to beat. And yes, you do have to beat the ENTIRE THING if you want to give me a fair grade, as tidbits of information about my topic lie everywhere within the game. As such, I have left a recording of me beating the game myself, in case you want to grade it off that.</p>
+			<p>In case if you are wondering whether or not I made this by myself, I in fact did. I used the three.js fps example and built it up from there. The html, javascript, css, and MOST of the models were all made by me.</p>
+
+			<span id="before-have-fun" class="red-text hidden">Please Enjoy Game</span>
+			<span id="before-continue" class="hidden">Press [ENTER] to continue...</span>
+		</div>
+
+		<div id="title-screen-real">
+			<span class="hidden">According to the CDC,</span>
+
+			<span class="hidden">Over<span class="red-text hidden"> 22.2% </span>amongst 12- to 19-year-olds are overweight</span>
+
+			<span class="hidden">Many of these cases of obesity can be traced back to unhealthy foods</span>
+			<span class="hidden">These unhealthy foods, full of saturated fats and sugar have become increasingly popular</span>
+
+			<span class="hidden">As a matter of fact, the World Obesity Federation predicts that <span class="red-text hidden">one billion people</span> will be living with obesity by 2030</span>
+
+			<span class="hidden">Eating an excessive amount of unhealthy foods can cause all kinds of problems, ranging from cardiovascular diseases to some cancers.</span>
+
+			<span class="hidden">The setting is 2080</span>
+			<span class="hidden">Over 50% of humans suffer from obesity due to consuming unimaginable amounts unhealthy foods</span>
+			<span class="hidden">The world has enlisted the help of [[REDACTED]] to save the world</span>
+
+			<span class="hidden">[[REDACTED]] has been granted weapons to eliminate unhealthy foods.</span>
+			<span class="red-text hidden">Use any means neccessary</span>
+
+			<span class="red-text hidden">GOOD LUCK</span>
+
+
+			<span class="hidden">Health Project</span>
+			<span class="hidden">By Andrew C.</span>
+			<span class="hidden">3LIMINADE</span>
+		</div>
+
 	</div>
 
 	<div id="debugger">
 		Hello
-	</div>
-
-	<div class="tutorial hidden">
-		<!-- Mouse move Icon -->
-		to look around
-	</div>
-	<div class="tutorial hidden">
-		<!-- W A S D -->
-		to move
-	</div>
-	<div class="tutorial hidden">
-		<!-- Spacebar -->
-		to jump
-	</div>
-	<div class="tutorial hidden">
-		<!-- Spacebar -->
-		while in the air to double jump
-	</div>
-	<div class="tutorial hidden">
-		<!-- E -->
-		to interact
-	</div>
-	<div class="tutorial hidden">
-		<!-- Click -->
-		to shoot
-	</div>
-	<div class="tutorial hidden">
-		<!-- R -->
-		to reload
-	</div>
-
-	<div id="dialogue-box" class="hidden">
-		Reimu theres no way!
 	</div>
 </body>
 </html>

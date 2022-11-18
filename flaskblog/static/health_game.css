@@ -19,6 +19,20 @@ body {
 	transform: translate(-50%, -50%);
 }
 
+#header {
+	position: absolute;
+
+	top: 0;
+	left: 40%;
+
+	display: flex;
+	gap: 16px;
+
+	color: #000;
+	font-weight: 1000;
+	font-size: 20px;
+}
+
 #carrot_blaster_recharge {
 	position: absolute;
 
@@ -133,6 +147,44 @@ body {
 	border-radius: 5px;
 }
 
+#info-card {
+	position: absolute;
+
+	top: 25%;
+	right: 3%;
+
+	height: 25%;
+	width: 25%;
+
+	color: #fff;
+	padding: 16px 24px;
+
+	background-color: #525252;
+	border-radius: 25px;
+	border: 5px solid #000;
+}
+
+#info-card-title {
+	margin: 0;
+}
+
+#controls {
+	position: absolute;
+
+	bottom: 1%;
+	right: 1%;
+
+	flex-direction: column;
+
+	color: #fff;
+	font-weight: 1000;
+
+	padding: 24px 16px;
+
+	background-color: #000;
+	border-radius: 15px;
+}
+
 .hidden {
 	display: none;
 }
@@ -158,13 +210,47 @@ body {
 #debugger {
 	position: absolute;
 	top: 0;
-	left: 50%;
+	right: 0;
 
 	color: #fff;
 
 	background-color: #000;
 }
 
+#death-screen {
+	position: absolute;
+
+	top: 0;
+	left: 0;
+
+	height: 100%;
+	width: 100%;
+
+	flex-direction: column;
+	align-items: center;
+
+	color: #fff;
+	font-size: 100px;
+
+	background-color: #000;
+}
+
+#death-screen img {
+	height: 60%;
+	width: 20%;
+}
+
+#before-title {
+	position: absolute;
+	top: 10%;
+
+	display: flex;
+	flex-direction: column;
+}
+
+#before-title > * {
+	margin-left: 5%;
+}
 
 #title-screen {
 	position: absolute;
@@ -176,73 +262,19 @@ body {
 
 	display: flex;
 	flex-direction: column;
-	align-items: center;
 
 	color: #fff;
+	font-size: 32px;
+	font-weight: 1000;
 
 	background-color: #000;
 }
 
-#title-screen span:nth-child(1) {
+
+#title-screen-real {
+	margin: auto;
+}
+
+.red-text {
 	color: #f00;
-	font-size: 99px;
-}
-
-#title-screen span:nth-child(2) {
-	color: #fff;
-	font-size: 32px;
-	font-weight: 600;
-}
-
-#title-screen span:nth-child(2) {
-	color: #fff;
-	font-size: 32px;
-	font-weight: 600;
-}
-
-#play-button {
-	cursor: pointer;
-	height: 15vh;
-	width: 25vw;
-
-	color: #fff;
-	font-size: 50px;
-	font-weight: 700;
-
-	margin-top: 25vh;
-
-	background-color: #38d433;
-	border-radius: 25px;
-	border: 5px solid #38d433;
-}
-
-.tutorial {
-	position: absolute;
-
-	height: 256px;
-	width: 512px;
-
-	background-color: #fff;
-	border-radius: 25px;
-	border: 5px solid #000;
-}
-
-#dialogue-box {
-	position: absolute;
-	z-index: 2;
-
-	height: 128px;
-	width: 75vw;
-
-	left: calc(25vw / 2 - 28px);
-	bottom: 32px;
-
-	padding: 16px 28px;
-
-	background-color: #fff;
-
-	font-size: 24px;
-
-	border-radius: 25px;
-	border: 5px solid #000;
 }
