@@ -12,6 +12,13 @@ body {
 	font-family: 'Lato', sans-serif;
 }
 
+* {
+	-webkit-user-select: none; /* Safari */        
+	-moz-user-select: none; /* Firefox */
+	-ms-user-select: none; /* IE10+/Edge */
+	user-select: none; /* Standard */
+}
+
 #crosshair {
 	position: absolute;
 	top: 50%;
@@ -21,9 +28,9 @@ body {
 
 #header {
 	position: absolute;
-
-	top: 0;
-	left: 40%;
+	top: 5%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 
 	display: flex;
 	gap: 16px;
@@ -31,6 +38,18 @@ body {
 	color: #000;
 	font-weight: 1000;
 	font-size: 20px;
+}
+
+#wave-announcer {
+	position: absolute;
+
+	top: 30%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+
+	font-style: bold;
+	font-size: 32px;
+	font-weight: 1000;
 }
 
 #carrot_blaster_recharge {
@@ -273,6 +292,28 @@ body {
 
 #title-screen-real {
 	margin: auto;
+}
+
+#ending-screen {
+	position: absolute;
+	top: 0;
+	left: 0;
+
+	height: 100vh;
+	width: 100vw;
+
+	color: #fff;
+	font-size: 32px;
+	font-weight: 1000;
+
+	background-color: #000;
+}
+
+#ending-screen span {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 }
 
 .red-text {

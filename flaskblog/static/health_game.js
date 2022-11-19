@@ -1,15 +1,3 @@
-const controls_menu = document.querySelector('#controls')
-
-document.addEventListener('keydown', (event) => {
-	if (event.code == 'KeyH') {
-		if (controls_menu.style.display == 'flex') {
-			controls_menu.style.display = 'none'
-		} else {
-			controls_menu.style.display = 'flex'
-		}
-	}
-})
-
 let running = false
 function before_opening_sequence() {
 	const before_title = document.querySelector('#before-title')
@@ -21,13 +9,7 @@ function before_opening_sequence() {
 		before_continue.classList.add('fade-in-text')
 
 		document.addEventListener('keydown', (event) => {
-			if (event.code == 'KeyH') {
-				if (controls_menu.style.display == 'flex') {
-					controls_menu.style.display = 'none'
-				} else {
-					controls_menu.style.display = 'flex'
-				}
-			} else if (event.code == 'Enter' && running == false) {
+			if (event.code == 'Enter' && running == false) {
 				running = true
 				before_have_fun.classList.remove('hidden')
 				before_have_fun.classList.add('fade-in-text')

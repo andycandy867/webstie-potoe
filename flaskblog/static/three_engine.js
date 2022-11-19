@@ -24,7 +24,7 @@ const texture = texture_loader.load([
 ]);
 
 scene.background = texture;
-// scene.background = new THREE.Color(0xffffff);
+//scene.background = new THREE.Color(0xffffff);
 
 const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 100);
 camera.rotation.order = 'YXZ';
@@ -94,6 +94,7 @@ for (let i = 0; i < NUM_SPHERES; i ++) {
 const worldOctree = new Octree();
 
 const playerCollider = new Capsule(new THREE.Vector3(0, 0.35, 0), new THREE.Vector3(0, 1, 0), 0.35);
+playerCollider.translate(new THREE.Vector3(0, 30, 0));
 
 const playerVelocity = new THREE.Vector3();
 const playerDirection = new THREE.Vector3();
@@ -111,12 +112,428 @@ const vector3 = new THREE.Vector3();
 
 const loader = new GLTFLoader()
 
-const debugg = document.querySelector('#debugger')
+const wave_enemies_gui = document.querySelector('#enemies-remaining')
+class Enemy {
+	constructor() {
+		this.attack_debounce = true
+	}
 
-let wave = 1
-let enemies_remaining = 5
-let wave_maps = {}
-let wave_enemy_spawn_locations = {}
+	take_damage(dmg) {
+		this.hp -= dmg
+
+		if (this.hp <= 0) {
+			hp += 5
+			update_hp()
+			const index = enemies.indexOf(this);
+
+			if (index > -1) { // only splice array when item is found
+				let splice = enemies.splice(index, 1); // 2nd parameter means remove one item only
+			}
+
+			scene.remove(this.mesh)
+
+			let enemy_count = enemies.length
+			wave_enemies_gui.innerHTML = `Enemies Remaining - [${enemy_count}]`
+			if (enemy_count == 0) {
+				new_wave()
+			}
+		}
+	}
+}
+
+class EnemyFries extends Enemy {
+	constructor(location) {
+		super()
+		loader.setPath('/static/resources/models/enemies/')
+
+		loader.load(`Fries.glb`, (gltf) => {
+			this.id = gltf.scene.id
+			this.mesh = gltf.scene
+			this.collider = new Capsule(new THREE.Vector3(0, 0.35, 0), new THREE.Vector3(0, 1, 0), 0.35);
+			this.starting_position = location
+			this.collider.translate(location);
+			this.velocity = new THREE.Vector3()
+
+			this.mesh.scale.setScalar(4)
+			this.mesh.name = 'enemy'
+			scene.add(this.mesh)
+		})
+
+		this.on_floor = false
+		this.hp = 1
+		this.attack_cooldown = 500
+	}
+
+	attack() {
+		if (!invulnerable) {
+			hp -= 5
+
+			update_hp()
+		}
+	}
+}
+
+class EnemyHamburger extends Enemy {
+	constructor(location) {
+		super()
+		loader.setPath('/static/resources/models/enemies/')
+
+		loader.load(`Hamburger.glb`, (gltf) => {
+			this.id = gltf.scene.id
+			this.mesh = gltf.scene
+			this.collider = new Capsule(new THREE.Vector3(0, 0.35, 0), new THREE.Vector3(0, 1, 0), 0.35);
+			this.starting_position = location
+			this.collider.translate(location);
+			this.velocity = new THREE.Vector3()
+
+			this.mesh.scale.setScalar(0.25)
+			this.mesh.name = 'enemy'
+			scene.add(this.mesh)
+		})
+
+		this.on_floor = false
+		this.hp = 2
+		this.attack_cooldown = 500
+	}
+
+	attack() {
+		if (!invulnerable) {
+			hp -= 5
+
+			update_hp()
+		}
+	}
+}
+
+class EnemySoftDrink extends Enemy {
+	constructor(location) {
+		super()
+		loader.setPath('/static/resources/models/enemies/')
+
+		loader.load(`SoftDrink.glb`, (gltf) => {
+			this.id = gltf.scene.id
+			this.mesh = gltf.scene
+			console.log(this.mesh)
+			this.collider = new Capsule(new THREE.Vector3(0, 0.35, 0), new THREE.Vector3(0, 1, 0), 0.35);
+			this.starting_position = location
+			this.collider.translate(location);
+			this.velocity = new THREE.Vector3()
+
+			this.mesh.scale.setScalar(0.75)
+			this.mesh.name = 'enemy'
+			scene.add(this.mesh)
+		})
+
+		this.on_floor = false
+		this.hp = 3
+		this.attack_cooldown = 500
+	}
+
+	attack() {
+		if (!invulnerable) {
+			hp -= 15
+
+			update_hp()
+		}
+	}
+}
+
+class EnemyCake extends Enemy {
+	constructor(location) {
+		super()
+		loader.setPath('/static/resources/models/enemies/')
+
+		loader.load(`Cake.glb`, (gltf) => {
+			this.id = gltf.scene.id
+			this.mesh = gltf.scene
+			this.collider = new Capsule(new THREE.Vector3(0, 0.35, 0), new THREE.Vector3(0, 1, 0), 0.35);
+			this.starting_position = location
+			this.collider.translate(location);
+			this.velocity = new THREE.Vector3()
+
+			this.mesh.scale.setScalar(3)
+			this.mesh.name = 'enemy'
+			scene.add(this.mesh)
+		})
+
+		this.on_floor = false
+		this.hp = 5
+		this.attack_cooldown = 500
+	}
+
+	attack() {
+		if (!invulnerable) {
+			hp -= 10
+
+			update_hp()
+		}
+	}
+}
+
+const ending_screen = document.querySelector('#ending-screen')
+const ending_span = ending_screen.querySelectorAll('span')
+function ending_sequence() {
+	let audio = new Audio('/static/resources/audio/songs/berrygo.mp3')
+	audio.play()
+
+	ending_screen.style.display = 'block'
+	reveal_element(ending_span[0], 1000)
+	hide_element(ending_span[0], 4000)
+	reveal_element(ending_span[1], 6000)
+	hide_element(ending_span[1], 9000)
+	reveal_element(ending_span[2], 13000)
+}
+
+function reveal_element(element, time) {
+	window.setTimeout(() => {
+		element.style.display = 'block'
+		element.classList.add('fade-in-text')
+	}, time)
+}
+
+function hide_element(element, time) {
+	window.setTimeout(() => {
+		element.classList.add('fade-out-text')
+
+		window.setTimeout(() => {
+			element.remove()
+		}, 5000)
+	}, time)
+}
+
+const wave_count_gui = document.querySelector('#wave-count')
+const wave_announcer_gui = document.querySelector('#wave-announcer')
+const info_card = document.querySelector('#info-card')
+const info_card_title = info_card.querySelector('#info-card-title')
+const info_card_body = info_card.querySelector('#info-card-body')
+function new_wave() {
+	wave += 1
+
+	if (wave == 1) {
+		info_card_title.innerHTML = 'Fries'
+		info_card_body.innerHTML = 'Fries are high in fats, calories, and sodium.'
+		info_card.style.display = 'block'
+
+		setTimeout(() => {
+			info_card.style.display = 'none'
+		}, 10000)
+	} else if (wave == 4) {
+		info_card_title.innerHTML = 'Hamburger'
+		info_card_body.innerHTML = 'Hamburgers are high in saturated fats and cholesterol, which can increase blood pressure.'
+		info_card.style.display = 'block'
+
+		setTimeout(() => {
+			info_card.style.display = 'none'
+		}, 10000)
+	} else if (wave == 6) {
+		info_card_title.innerHTML = 'Soft Drinks'
+		info_card_body.innerHTML = 'Soft Drinks are extremely high in sugar, which can lead to diabetes.'
+		info_card.style.display = 'block'
+
+		setTimeout(() => {
+			info_card.style.display = 'none'
+		}, 10000)
+	} else if (wave == 8) {
+		info_card_title.innerHTML = 'Cake'
+		info_card_body.innerHTML = 'Cakes are ridiculous high in sugar and fats, which can lead to diabetes and high blood pressure.'
+		info_card.style.display = 'block'
+
+		setTimeout(() => {
+			info_card.style.display = 'none'
+		}, 10000)
+	} else if (wave == 11) {
+		ending_sequence()
+	}
+
+	wave_count_gui.innerHTML = `Wave - [${wave}]`
+	wave_announcer_gui.innerHTML = wave_introduction[wave]
+	wave_announcer_gui.style.display = 'block'
+	wave_announcer_gui.classList.remove('fade-out-text')
+	wave_announcer_gui.classList.add('fade-in-text')
+
+	setTimeout(() => {
+		wave_announcer_gui.classList.remove('fade-in-text')
+		wave_announcer_gui.classList.add('fade-out-text')
+		wave_announcer_gui.style.display = 'none'
+
+		for (const enemy_type in wave_enemy_types[wave]) {
+			if (Object.prototype.hasOwnProperty.call(wave_enemy_types[wave], enemy_type)) {
+				wave_enemy_types[wave][enemy_type].forEach(async enemy_position => {
+					let enemy
+					switch (enemy_type) {
+						case 'Fries':
+							enemy = new EnemyFries(enemy_position)
+							break
+						case 'Hamburger':
+							enemy = new EnemyHamburger(enemy_position)
+							break
+						case 'SoftDrink':
+							enemy = new EnemySoftDrink(enemy_position)
+							break
+						case 'Cake':
+							enemy = new EnemyCake(enemy_position)
+							break
+					}
+
+					enemies.push(enemy)
+					await timer(enemies.length * 10)
+				})
+			}
+		}
+	}, 2500)
+}
+
+let wave = 0
+const wave_introduction = {1: 'Humble Beginnings', 2: 'More of the same', 3: 'Even More Enemies', 4: 'A new foe', 5: 'Continuation', 6: 'Fast Food Distaster', 7: 'When Food Fights Back', 8: 'Your Worst Nightmare', 9: 'For The Good Of The World', 10: 'THERE ARE TOO MANY TO COUNT'}
+const wave_enemy_types = {1: {'Fries': [new THREE.Vector3(14, 7, 14),
+						new THREE.Vector3(-14, 7, 14),
+						new THREE.Vector3(14, 7, -14),
+						new THREE.Vector3(-14, 7, -14)]},
+
+
+						2: {'Fries': [new THREE.Vector3(14, 7, 14),
+						new THREE.Vector3(-14, 7, 14),
+						new THREE.Vector3(14, 7, -14),
+						new THREE.Vector3(-14, 7, -14),
+
+						new THREE.Vector3(13, 1, 0),
+						new THREE.Vector3(0, 1, 13),
+						new THREE.Vector3(-13, 1, 0),
+						new THREE.Vector3(0, 1, -13)]},
+
+
+						3: {'Fries': [new THREE.Vector3(14, 7, 14),
+						new THREE.Vector3(-14, 7, 14),
+						new THREE.Vector3(14, 7, -14),
+						new THREE.Vector3(-14, 7, -14),
+
+						new THREE.Vector3(13, 1, 0),
+						new THREE.Vector3(0, 1, 13),
+						new THREE.Vector3(-13, 1, 0),
+						new THREE.Vector3(0, 1, -13),
+
+						new THREE.Vector3(6, 7, 6),
+						new THREE.Vector3(-6, 7, 6),
+						new THREE.Vector3(-6, 7, -6),
+						new THREE.Vector3(6, 7, -6)]},
+
+						4: {'Fries': [new THREE.Vector3(6, 7, 6),
+						new THREE.Vector3(-6, 7, 6),
+						new THREE.Vector3(-6, 7, -6),
+						new THREE.Vector3(6, 7, -6)],
+						'Hamburger': [new THREE.Vector3(0, 7, 0)]},
+
+						5: {'Fries': [new THREE.Vector3(13, 1, 0),
+						new THREE.Vector3(0, 1, 13),
+						new THREE.Vector3(-13, 1, 0),
+						new THREE.Vector3(0, 1, -13)],
+						'Hamburger': [new THREE.Vector3(14, 7, 14),
+						new THREE.Vector3(-14, 7, 14),
+						new THREE.Vector3(14, 7, -14),
+						new THREE.Vector3(-14, 7, -14)]},
+
+						6: {'Fries': [new THREE.Vector3(13, 1, 0),
+						new THREE.Vector3(0, 1, 13),
+						new THREE.Vector3(-13, 1, 0),
+						new THREE.Vector3(0, 1, -13)],
+						'Hamburger': [new THREE.Vector3(14, 7, 14),
+						new THREE.Vector3(-14, 7, 14),
+						new THREE.Vector3(14, 7, -14),
+						new THREE.Vector3(-14, 7, -14)],
+						'SoftDrink': [new THREE.Vector3(6, 7, 6),
+						new THREE.Vector3(-6, 7, -6)]},
+
+						7: {'Fries': [new THREE.Vector3(6, 7, 6),
+						new THREE.Vector3(-6, 7, 6),
+						new THREE.Vector3(-6, 7, -6),
+						new THREE.Vector3(6, 7, -6)],
+						'Hamburger': [new THREE.Vector3(14, 7, 14),
+						new THREE.Vector3(-14, 7, 14),
+						new THREE.Vector3(14, 7, -14),
+						new THREE.Vector3(-14, 7, -14)],
+						'SoftDrink': [new THREE.Vector3(13, 1, 0),
+						new THREE.Vector3(0, 1, 13),
+						new THREE.Vector3(-13, 1, 0),
+						new THREE.Vector3(0, 1, -13)]},
+
+						8: {'Fries': [new THREE.Vector3(6, 7, 6),
+						new THREE.Vector3(-6, 7, 6),
+						new THREE.Vector3(-6, 7, -6),
+						new THREE.Vector3(6, 7, -6)],
+						'Hamburger': [new THREE.Vector3(14, 7, 14),
+						new THREE.Vector3(-14, 7, 14),
+						new THREE.Vector3(14, 7, -14),
+						new THREE.Vector3(-14, 7, -14)],
+						'SoftDrink': [new THREE.Vector3(13, 1, 0),
+						new THREE.Vector3(0, 1, 13),
+						new THREE.Vector3(-13, 1, 0),
+						new THREE.Vector3(0, 1, -13)],
+						'Cake': [new THREE.Vector3(0, 7, 0)]},
+
+						9: {'Fries': [new THREE.Vector3(6, 7, 6),
+						new THREE.Vector3(-6, 7, 6),
+						new THREE.Vector3(-6, 7, -6),
+						new THREE.Vector3(6, 7, -6),
+
+						new THREE.Vector3(13, 1, 0),
+						new THREE.Vector3(0, 1, 13),
+						new THREE.Vector3(-13, 1, 0),
+						new THREE.Vector3(0, 1, -13)],
+						'Hamburger': [new THREE.Vector3(14, 7, 14),
+						new THREE.Vector3(-14, 7, 14),
+						new THREE.Vector3(14, 7, -14),
+						new THREE.Vector3(-14, 7, -14)],
+						'SoftDrink': [new THREE.Vector3(13, 1, 0),
+						new THREE.Vector3(0, 1, 13),
+						new THREE.Vector3(-13, 1, 0),
+						new THREE.Vector3(0, 1, -13)],
+						'Cake': [new THREE.Vector3(-14, 7, -14),
+						new THREE.Vector3(14, 7, 14)]},
+
+						10: {'Fries': [new THREE.Vector3(6, 7, 6),
+						new THREE.Vector3(-6, 7, 6),
+						new THREE.Vector3(-6, 7, -6),
+						new THREE.Vector3(6, 7, -6),
+
+						new THREE.Vector3(14, 7, 14),
+						new THREE.Vector3(-14, 7, 14),
+						new THREE.Vector3(14, 7, -14),
+						new THREE.Vector3(-14, 7, -14),
+
+						new THREE.Vector3(13, 1, 0),
+						new THREE.Vector3(0, 1, 13),
+						new THREE.Vector3(-13, 1, 0),
+						new THREE.Vector3(0, 1, -13)],
+						'Hamburger': [new THREE.Vector3(6, 7, 6),
+						new THREE.Vector3(-6, 7, 6),
+						new THREE.Vector3(-6, 7, -6),
+						new THREE.Vector3(6, 7, -6),
+
+						new THREE.Vector3(14, 7, 14),
+						new THREE.Vector3(-14, 7, 14),
+						new THREE.Vector3(14, 7, -14),
+						new THREE.Vector3(-14, 7, -14),
+
+						new THREE.Vector3(13, 1, 0),
+						new THREE.Vector3(0, 1, 13),
+						new THREE.Vector3(-13, 1, 0),
+						new THREE.Vector3(0, 1, -13)],
+						'SoftDrink': [new THREE.Vector3(13, 1, 0),
+						new THREE.Vector3(0, 1, 13),
+						new THREE.Vector3(-13, 1, 0),
+						new THREE.Vector3(0, 1, -13),
+
+						new THREE.Vector3(14, 7, 14),
+						new THREE.Vector3(-14, 7, 14),
+						new THREE.Vector3(14, 7, -14),
+						new THREE.Vector3(-14, 7, -14)],
+						'Cake': [new THREE.Vector3(14, 7, 14),
+						new THREE.Vector3(-14, 7, 14),
+						new THREE.Vector3(14, 7, -14),
+						new THREE.Vector3(-14, 7, -14)]},
+					}
+
+let enemies = []
 
 const raycaster = new THREE.Raycaster();
 
@@ -145,7 +562,7 @@ function cast_ray() {
 
 	let final_intersects = []
 	let hit_enemies_id = []
-	if (intersects) {
+	if (intersects[0]) {
 		for (var i = 0; i < intersects.length; i++) {
 			if (!(hit_enemies_id.includes(intersects[i].object.parent.id)) && intersects[i].object.parent.name == 'enemy' && final_intersects.length <= 3) {
 				final_intersects.push(intersects[i])
@@ -157,6 +574,15 @@ function cast_ray() {
 		 }
 
 		 return final_intersects
+	} else {
+		let camera_pos = camera.position.clone()
+
+		let applic = camera.getWorldDirection(playerDirection);
+		applic.normalize();
+
+		camera_pos.add(applic.multiplyScalar(50));
+
+		return camera_pos
 	}
 }
 
@@ -185,8 +611,22 @@ function fire() {
 		if (intersects[0].object.parent.name == 'enemy') {
 			let enemy = enemies.find(enemy => enemy.id == intersects[0].object.parent.id);
 			enemy.take_damage(1)
+		} else if (intersects[0].object.parent.parent.name == 'enemy') {
+			let enemy = enemies.find(enemy => enemy.id == intersects[0].object.parent.parent.id);
+			enemy.take_damage(1)
 		}
 
+		animation.play().reset()
+
+		window.setTimeout(() => {
+			scene.remove(mesh);
+			mesh.geometry.dispose();
+		}, 100)
+	} else {
+		let mesh = cylinder_mesh(carrot_blaster_model.position, intersects, 0.01)
+		scene.add(mesh)
+
+		bullet_point.position.copy(intersects)
 		animation.play().reset()
 
 		window.setTimeout(() => {
@@ -226,7 +666,6 @@ async function carrot_blaster_recharge() {
 }
 
 function alt_fire() {
-	// 3 dmg, split between peirce. If no second target then 3 to first, if 2 then 1.5, 1.5, if 3 then 1, 1, 1
 	let intersects = cast_ray();
 
 	if (intersects[0]) {
@@ -240,13 +679,16 @@ function alt_fire() {
 			if (intersects[i].object.parent.name == 'enemy') {
 				let enemy = enemies.find(enemy => enemy.id == intersects[i].object.parent.id);
 				hit_enemies.push(enemy)
+			} else if (intersects[0].object.parent.parent.name == 'enemy') {
+				let enemy = enemies.find(enemy => enemy.id == intersects[0].object.parent.parent.id);
+				hit_enemies.push(enemy)
 			}
 		}
 
 		if (hit_enemies.length > 0) {
 			let hit_count = 3
 			i = 0
-			while (hit_count >= 0) {
+			while (hit_count > 0) {
 				if (!hit_enemies[i]) {
 					i = 0
 					continue
@@ -260,12 +702,24 @@ function alt_fire() {
 
 		animation.play().reset()
 
+		scale_down(mesh)
 		window.setTimeout(() => {
 			scene.remove(mesh);
 			mesh.geometry.dispose();
 		}, 500)
+	} else {
+		let mesh = cylinder_mesh(carrot_blaster_model.position, intersects, 0.25)
+		scene.add(mesh)
+
+		bullet_point.position.copy(intersects)
+
+		animation.play().reset()
 
 		scale_down(mesh)
+		window.setTimeout(() => {
+			scene.remove(mesh);
+			mesh.geometry.dispose();
+		}, 500)
 	}
 
 	carrot_blaster_recharge()
@@ -277,13 +731,14 @@ const death_screen = document.querySelector('#death-screen')
 const hp_count = document.querySelector('#health_bar_count')
 const hp_bar = document.querySelector('#health_bar_progress')
 function update_hp() {
-	hp_count.innerHTML = hp
-	hp_bar.style.width = `${hp}%`
-
 	if (hp <= 0) {
 		death_screen.style.display = 'flex'
-		// Player Death
+	} else if (hp > 100) {
+		hp = 100
 	}
+
+	hp_count.innerHTML = hp
+	hp_bar.style.width = `${hp}%`
 }
 let carrot_blaster_model = null
 let carrot_blaster_debounce = true
@@ -310,9 +765,38 @@ function update_stamina() {
 let dash_debounce = true;
 let sliding = false
 let slam = false
+const controls_menu = document.querySelector('#controls')
 document.addEventListener('keydown', (event) => {
 	switch (event.code) {
-		// Double Jump
+		case 'KeyH':
+			if (controls_menu.style.display == 'flex') {
+				controls_menu.style.display = 'none'
+			} else {
+				controls_menu.style.display = 'flex'
+			}
+
+			break
+		case 'KeyR':
+			if (death_screen.style.display == 'flex') {
+				wave -= 1
+
+				playerCollider.start.set(0, 0.35, 0);
+				playerCollider.end.set(0, 1, 0);
+				playerCollider.translate(new THREE.Vector3(0, 7, 0))
+				camera.position.copy(playerCollider.end);
+				camera.rotation.set(0, 0, 0);
+
+				hp = 100
+				update_hp()
+
+				for (var i = enemies.length - 1; i >= 0; i--) {
+					enemies[i].take_damage(100)
+				}
+
+				death_screen.style.display = 'none'
+			}
+
+			break
 		case 'Space':
 			if (!keyStates['Space']) {
 				if (jumps_remaining == 2) {
@@ -337,7 +821,6 @@ document.addEventListener('keydown', (event) => {
 			}
 
 			break
-		// Dash
 		case 'KeyF':
 			if (dash_debounce && !sliding) {
 				if (!keyStates['KeyF'] && stamina >= 1) {
@@ -508,48 +991,6 @@ document.body.addEventListener('mousemove', (event) => {
 		}
 	}
 });
-
-class Enemy {
-	constructor(model, hp) {
-		loader.setPath('/static/resources/models/enemies/')
-
-		loader.load(`${model}`, (gltf) => {
-			this.id = gltf.scene.id
-			this.mesh = gltf.scene
-			this.collider = new Capsule(new THREE.Vector3(0, 0.35, 0), new THREE.Vector3(0, 1, 0), 0.35);
-			this.collider.translate(new THREE.Vector3(5, 5, 5));
-			this.velocity = new THREE.Vector3()
-
-			this.mesh.scale.setScalar(4)
-			this.mesh.name = 'enemy'
-			scene.add(gltf.scene)
-		})
-
-		this.on_floor = false
-		this.hp = hp
-		this.attack_debounce = true
-		this.attack_cooldown = 500
-	}
-
-	take_damage(dmg) {
-		this.hp -= dmg
-
-		if (this.hp <= 0) {
-			enemies.pop(this)
-			scene.remove(this.mesh)
-		}
-	}
-
-	async attack() {
-		if (!invulnerable) {
-			hp -= 5
-
-			update_hp()
-		}
-	}
-}
-
-let enemies = [/*new Enemy('Fries.glb', 1)*/]
 
 window.addEventListener('resize', onWindowResize);
 
@@ -736,18 +1177,20 @@ function enemy_player_collision(enemy) {
 
 function enemy_collisions(delta_time) {
 	enemies.forEach(enemy => {
-		const result = worldOctree.capsuleIntersect(enemy.collider);
+		if (enemy.collider) {
+			const result = worldOctree.capsuleIntersect(enemy.collider);
 
-		enemy.on_floor = false;
+			enemy.on_floor = false;
 
-		if (result) {
-			enemy.on_floor = result.normal.y > 0;
+			if (result) {
+				enemy.on_floor = result.normal.y > 0;
 
-			if (!enemy.on_floor) {
-				enemy.velocity.addScaledVector(result.normal, -result.normal.dot(enemy.velocity));
+				if (!enemy.on_floor) {
+					enemy.velocity.addScaledVector(result.normal, -result.normal.dot(enemy.velocity));
+				}
+
+				enemy.collider.translate(result.normal.multiplyScalar(result.depth));
 			}
-
-			enemy.collider.translate(result.normal.multiplyScalar(result.depth));
 		}
 	})
 }
@@ -756,45 +1199,47 @@ function update_enemies(delta_time) {
 	let damping = Math.exp(-4 * delta_time) - 1;
 
 	enemies.forEach(enemy => {
-		enemy.mesh.lookAt(playerCollider.end.x, enemy.mesh.position.y, playerCollider.end.z)
+		if (enemy.mesh) {
+			enemy.mesh.lookAt(playerCollider.end.x, enemy.mesh.position.y, playerCollider.end.z)
 
-		let enemy_direction = new THREE.Vector3()
-		enemy.mesh.getWorldDirection(enemy_direction);
-		enemy_direction.y = 0;
-		enemy_direction.normalize();
+			let enemy_direction = new THREE.Vector3()
+			enemy.mesh.getWorldDirection(enemy_direction);
+			enemy_direction.y = 0;
+			enemy_direction.normalize();
 
-		enemy.velocity.add(enemy_direction.multiplyScalar(0.01))
+			enemy.velocity.add(enemy_direction.multiplyScalar(0.05))
 
-		if (!enemy.on_floor) {
-			enemy.velocity.y -= GRAVITY * delta_time;
-			// small air resistance
-			damping *= 0.2718;
-		}
-
-		enemy.velocity.addScaledVector(enemy.velocity, damping);
-
-		// edit in future (raycast instead of just this to player camera)
-		let distance = new THREE.Vector3(playerCollider.end.x, playerCollider.end.y, playerCollider.end.z).distanceTo(new THREE.Vector3(enemy.collider.end.x, 0, enemy.collider.end.z))
-		if (distance < 1.5) {
-			enemy.velocity = new THREE.Vector3(0, 0, 0)
-
-			if (enemy.attack_debounce) {
-				enemy.attack_debounce = false
-				enemy.attack()
-
-				window.setTimeout(() => {
-					enemy.attack_debounce = true
-				}, enemy.attack_cooldown)
+			if (!enemy.on_floor) {
+				enemy.velocity.y -= GRAVITY * delta_time;
+				// small air resistance
+				damping *= 0.2718;
 			}
 
-			return
+			enemy.velocity.addScaledVector(enemy.velocity, damping);
+
+			// edit in future (raycast instead of just this to player camera)
+			let distance = new THREE.Vector3(playerCollider.end.x, playerCollider.end.y, playerCollider.end.z).distanceTo(enemy.collider.end)
+			if (distance < 1.5) {
+				enemy.velocity = new THREE.Vector3(0, 0, 0)
+
+				if (enemy.attack_debounce) {
+					enemy.attack_debounce = false
+					enemy.attack()
+
+					window.setTimeout(() => {
+						enemy.attack_debounce = true
+					}, enemy.attack_cooldown)
+				}
+
+				return
+			}
+
+			const deltaPosition = enemy.velocity.clone().multiplyScalar(delta_time);
+			enemy.collider.translate(deltaPosition);
+
+			enemy.mesh.position.copy(enemy.collider.start)
+			enemy_player_collision(enemy)
 		}
-
-		const deltaPosition = enemy.velocity.clone().multiplyScalar(delta_time);
-		enemy.collider.translate(deltaPosition);
-
-		enemy.mesh.position.copy(enemy.collider.start)
-		enemy_player_collision(enemy)
 	})
 
 	enemy_collisions();
@@ -878,6 +1323,7 @@ function shooting() {
 	}
 }
 
+/*)
 function teleportPlayerIfOob() {
 	if (camera.position.y <= - 25) {
 		playerCollider.start.set(0, 0.35, 0);
@@ -885,6 +1331,22 @@ function teleportPlayerIfOob() {
 		camera.position.copy(playerCollider.end);
 		camera.rotation.set(0, 0, 0);
 	}
+}
+*/
+
+function kill_if_oob() {
+	if (camera.position.y <= -30) {
+		hp -= 100
+		update_hp()
+	}
+
+	enemies.forEach(enemy => {
+		if (enemy.mesh) {
+			if (enemy.mesh.position.y <= -30) {
+				enemy.take_damage(100)
+			}
+		}
+	})
 }
 
 function regen_stamina() {
@@ -895,26 +1357,6 @@ function regen_stamina() {
 		}
 	}
 }
-
-loader.setPath('/static/resources/models/maps/');
-loader.load('map_3_5.glb', (gltf) => {
-	scene.add(gltf.scene);
-
-	worldOctree.fromGraphNode(gltf.scene);
-
-	/*
-	gltf.scene.traverse(child => {
-		if (child.isMesh) {
-			child.castShadow = true;
-			child.receiveShadow = true;
-
-			if (child.material.map) {
-				child.material.map.anisotropy = 4;
-			}
-		}
-	});
-	*/
-});
 
 let mixer
 let animation
@@ -929,9 +1371,29 @@ loader.load('carrot_blaster_joined_but_anim.glb', (gltf) => {
 	const clip = THREE.AnimationClip.findByName(gltf.animations, 'Recoil')
 	animation = mixer.clipAction(clip)
 	animation.setLoop(THREE.LoopOnce);
-
-	animate();
 })
+
+loader.setPath('/static/resources/models/maps/');
+loader.load(`map.glb`, (gltf) => {
+	scene.add(gltf.scene);
+
+	worldOctree.fromGraphNode(gltf.scene);
+	/*
+	gltf.scene.traverse(child => {
+		if (child.isMesh) {
+			child.castShadow = true;
+			child.receiveShadow = true;
+
+			if (child.material.map) {
+				child.material.map.anisotropy = 4;
+			}
+		}
+	});
+	*/
+});
+
+new_wave();
+setTimeout(animate(), 1000)
 
 function update_gun_position() {
 	if (carrot_blaster_model) {
@@ -958,10 +1420,12 @@ function animate() {
 		updateSpheres(delta_time);
 
 		shooting()
-		teleportPlayerIfOob();
+		kill_if_oob();
 		regen_stamina();
 		update_gun_position();
-		mixer.update(delta_time)
+		if (mixer) {
+			mixer.update(delta_time)
+		}
 	}
 
 	renderer.render(scene, camera);

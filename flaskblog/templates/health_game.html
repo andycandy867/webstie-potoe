@@ -13,7 +13,11 @@
 
 		<div id="header">
 			<span id="wave-count">Wave - [1]</span>
-			<span id="enemies-remaining">Enemies Remaining - [34]</span>
+			<span id="enemies-remaining">Enemies Remaining - [4]</span>
+		</div>
+
+		<div id="wave-announcer">
+			Wave 1 - Humble Beginnings
 		</div>
 
 		<div id="carrot_blaster_recharge">
@@ -42,7 +46,7 @@
 			</div>
 		</div>
 
-		<div id="info-card" style="display: none;">
+		<div id="info-card" style="display: block;">
 			<h1 id="info-card-title">Carrots</h1>
 			<p id="info-card-body">Carrots are known for their vitamin-C, and can be extremely good for your body.</p>
 		</div>
@@ -80,11 +84,11 @@
 		<span>Press [R] To Restart</span>
 	</div>
 
-	<div id="title-screen">
+	<div id="title-screen" style="display: flex;">
 		<div id="before-title">
 			<span>Hi Teacher</span>
 			<span class="red-text">(It is highly recommended to play with keyboard and mouse)</span>
-			<p>I have realized at some point that the game may be too difficult for you to beat. And yes, you do have to beat the ENTIRE THING if you want to give me a fair grade, as tidbits of information about my topic lie everywhere within the game. As such, I have left a recording of me beating the game myself, in case you want to grade it off that.</p>
+			<p>I have realized at some point that the game may be too difficult for you to beat. And yes, you do have to beat the ENTIRE THING if you want to see more information, as tidbits of information about my topic lie everywhere within the game. The game is buggy. If you can't beat it normally, just jump onto one of the pillars and all the enimies will come flying off</p>
 			<p>In case if you are wondering whether or not I made this by myself, I in fact did. I used the three.js fps example and built it up from there. The html, javascript, css, and MOST of the models were all made by me.</p>
 
 			<span id="before-have-fun" class="red-text hidden">Please Enjoy Game</span>
@@ -115,13 +119,15 @@
 
 			<span class="hidden">Health Project</span>
 			<span class="hidden">By Andrew C.</span>
-			<span class="hidden">3LIMINADE</span>
 		</div>
-
 	</div>
 
-	<div id="debugger">
-		Hello
+	<div id="ending-screen" style="display: none;">
+		<span class="hidden">[[REDACTED]] has saved the world from unhealthy foods</span>
+		<span class="hidden">Without anything left to do on this world, [[REDACTED]] has left to help other worlds with [[REDACTED]]'s carrot blaster</span>
+		<span class="hidden">THE END</span>
 	</div>
+
+	<audio src="/static/resources/audio/songs/berrygo.mp3" loop id="game_audio"></audio>
 </body>
 </html>
