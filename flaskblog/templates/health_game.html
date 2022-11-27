@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Health Game</title>
+	<meta charset=utf-8 />
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link rel="stylesheet" type="text/css" href="/static/health_game.css">
+
+	<!-- Import maps polyfill -->
+	<!-- Remove this when import maps will be widely supported -->
+	<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js" defer></script>
+
+	<script type="importmap" defer>
+		{
+			"imports": {
+				"three": "/static/resources/three.module.js"
+			}
+		}
+	</script>
+
+	<script type="text/javascript" src="/static/resources/ammo.js" defer></script>
+	<script type="module" src="/static/three_engine.js" defer></script>
+</head>
+<body>
+	<div id="container">
+		<img id="crosshair" class="hidden" style="display: block;" src="/static/resources/images/crosshair.png">
+
+		<div id="header">
+			<span id="wave-count">Wave - [1]</span>
+			<span id="enemies-remaining">Enemies Remaining - [4]</span>
+		</div>
+
+		<div id="wave-announcer">
+			Wave 1 - Humble Beginnings
+		</div>
+
+		<div id="carrot_blaster_recharge">
+			<img id="carrot_blaster_battery" src="/static/resources/images/green_battery.png">
+			<div id="carrot_blaster_charge_container">
+				<div id="carrot_blaster_charge" style="width: 0%;"></div>
+			</div>
+		</div>
+
+		<div id="stats">
+			<div id="health_bar">
+				<div id="health_bar_progress">
+					<span id="health_bar_count">100</span>
+				</div>
+			</div>
+			<div id="stamina_bar">
+				<div class="stamina_bar_container_chunk">
+					<div id="stamina_bar_1" class="stamina_bar_chunk"></div>
+				</div>
+				<div class="stamina_bar_container_chunk">
+					<div id="stamina_bar_2" class="stamina_bar_chunk"></div>
+				</div>
+				<div class="stamina_bar_container_chunk">
+					<div id="stamina_bar_3" class="stamina_bar_chunk"></div>
+				</div>
+			</div>
+		</div>
+
+		<div id="info-card" style="display: block;">
+			<h1 id="info-card-title">Carrots</h1>
+			<p id="info-card-body">Carrots are known for their vitamin-C, and can be extremely good for your body.</p>
+		</div>
+
+		<div id="controls" style="display: flex;">
+			<span>[W/A/S/D] - Move</span>
+			<span>[Mouse] - Look Around</span>
+			<span>[Space] - Jump / Double Jump</span>
+			<span>[F] - Dash</span>
+			<span>[C] - Slam / Slide</span>
+			<span>[LeftClick] - Shoot</span>
+			<span>[RightClick] - Charge Special Attack</span>
+			<span>[H] - Hide This Menu</span>
+		</div>
+	</div>
+
+		<div id="death-screen" style="display: none;">
+		<span>You Are Dead</span>
+		<img src="/static/resources/images/skull.jpg">
+		<span>Press [R] To Restart</span>
+	</div>
+
+	<div id="title-screen" style="display: flex;">
+		<div id="before-title">
+			<span>Hi Teacher</span>
+			<span class="red-text">(It is highly recommended to play with keyboard and mouse)</span>
+			<p>I have realized at some point that the game may be too difficult for you to beat. And yes, you do have to beat the ENTIRE THING if you want to see more information, as tidbits of information about my topic lie everywhere within the game. The game is buggy. If you can't beat it normally, just jump onto one of the pillars and all the enimies will come flying off</p>
+			<p>In case if you are wondering whether or not I made this by myself, I in fact did. I used the three.js fps example and built it up from there. The html, javascript, css, and MOST of the models were all made by me.</p>
+
+			<span id="before-have-fun" class="red-text hidden">Please Enjoy Game</span>
+			<span id="before-continue" class="hidden">Press [ENTER] to continue...</span>
+		</div>
+
+		<div id="title-screen-real">
+			<span class="hidden">According to the CDC,</span>
+
+			<span class="hidden">Over                  amongst 12- to 19-year-olds are overweight</span>
+			<span class="red-text hidden"> 22.2% </span>
+
+			<span class="hidden">Many of these cases of obesity can be
+traced back to unhealthy foods</span>
+
+			<span class="hidden">These unhealthy foods,
+full of saturated fats and sugar
+have become increasingly popular</span>
+
+			<span class="hidden">As a matter of fact, the World Obesity Federation
+predicts that						will be living with obesity by 2030</span>
+			<span class="red-text hidden"> one billion people </span>
+
+			<span class="hidden">Eating an excessive amount of unhealthy foods can cause all kinds
+of problems, ranging from							to some		    .</span>
+
+			<span class="red-text hidden"> cardiovascular diseases </span>
+			<span class="red-text hidden"> cancers </span>
+
+			<span class="hidden">The setting is 2080</span>
+			<span class="hidden">Over 50% of humans suffer from obesity due to
+consuming unimaginable amounts unhealthy foods</span>
+			<span class="hidden">The world has enlisted the help of [[REDACTED]] to save the world</span>
+
+			<span class="hidden">[[REDACTED]] has been granted weapons to eliminate unhealthy foods.</span>
+			<span class="red-text hidden">Use any means neccessary</span>
+
+			<span class="red-text hidden">GOOD LUCK</span>
+		</div>
+	</div>
+
+	<div id="ending-screen" style="display: none;">
+		<span class="hidden">[[REDACTED]] has saved the world from unhealthy foods</span>
+		<span class="hidden">Without anything left to do on this world, [[REDACTED]] has left to help other worlds with [[REDACTED]]'s carrot blaster</span>
+		<span class="hidden">THE END</span>
+	</div>
+</body>
+</html>

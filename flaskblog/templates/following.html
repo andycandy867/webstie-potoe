@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block body %}
+	<div id="main-body">
+		<div class="following-section">
+			<div class="following-header">
+				<h2>Following</h2>
+			</div>
+			<div class="following-body">
+				{% if followed_users %}
+					{% for user in followed_users %}
+						<div class="followed-user">
+							<img class="followed-user-img" height="128" width="128" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + user.image_file) }}">
+							<div class="followed-user-info-container">
+								<h3>{{ user.username }}</h3>
+								<div class="followed-user-followers-posts">
+									{{ length(user.followers) }} Followers • {{ followed_users_posts_count[user.id] }} Posts
+								</div>
+								<p class="followed-user-description"><!-- user description --></p>
+							</div>
+						</div>
+					{% endfor %}
+
+					{% if length(current_user.following) > 3 %}
+						<button class="following-view-button">
+							Show {{ length(current_user.following) }} More Users
+						</button>
+					{% endif %}
+				{% else %}
+					<p class="following-filler">Not Following Anybody Yet</p>
+				{% endif %}
+			</div>
+		</div>
+
+		<div class="following-section">
+			<div class="following-header">
+				<h2>Followed Users Posts</h2>
+			</div>
+			<div class="following-body">
+				{% if followed_users_posts %}
+					{% for post in followed_users_posts %}
+						<article class="post-container">
+							<div class="post-header">
+								<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
+								<div class="post-header-info">
+									<a href="{{ url_for('users.user_posts', username=post.author.username) }}">
+										{{ post.author.username }}
+									</a>
+									<span>{{ length(post.author.followers) }} Followers</span>
+								</div>
+							</div>
+
+							<div class="post-title">
+								<a href="{{ url_for('posts.post', post_id=post.id) }}">{{ post.title }}</a>
+								{{ post.views }} views · {{ post.date_posted_ago() }}
+							</div>
+
+							<p class="post-content">{{ limit_content[post.id] }}</p>
+						</article>
+					{% endfor %}
+
+					{% if length(followed_users_posts) > 0 %}
+						<button class="following-view-button" onclick="redirect(`{{ url_for('users.user_posts', username=followed_users[0].username) }}`)">
+							Show {{ length(followed_users_posts) }} More Posts
+						</button>
+					{% endif %}
+				{% else %}
+					<p class="following-filler">After you follow some users their posts they will show up here</p>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+{% endblock %}

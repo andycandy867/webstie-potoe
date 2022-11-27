@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block body %}
+	<div id="main-body">
+		<div id="sign-in-container">
+			<form id="sign-in-form" method="POST" action="">
+				{{ form.hidden_tag() }}
+				<div>
+					<div id="sign-in-form-header">
+						<h1>Forgot Password</h1>
+					</div>
+
+					{% with messages = get_flashed_messages(with_categories=true) %} 
+						{% if messages %} 
+							{% for category, message in messages %}
+								<div class="sign-in-form-error">
+									{{ message }}
+								</div>
+							{% endfor %}
+						{% endif %}
+					{% endwith %}
+
+					<div id="sign-in-form-body">
+						<div class="sign-in-form-body-div">
+							{% if form.email.errors %}
+								{% for error in form.email.errors %}
+									<div class="sign-in-form-error">
+										{{ error }}
+									</div>
+								{% endfor %}
+							{% endif %}
+
+							{{ form.email(class="sign-in-input", placeholder="Username or Email") }}
+						</div>
+
+						<div class="sign-in-form-body-div">
+							{% if form.question.errors %}
+								{% for error in form.question.errors %}
+									<div class="sign-in-form-error">
+										{{ error }}
+									</div>
+								{% endfor %}
+							{% endif %}
+
+							{{ form.question(class="sign-in-input", placeholder="Choose the security question you linked with your account") }}
+						</div>
+
+						<div class="sign-in-form-body-div">
+							{% if form.answer.errors %}
+								{% for error in form.answer.errors %}
+									<div class="sign-in-form-error">
+										{{ error }}
+									</div>
+								{% endfor %}
+							{% endif %}
+
+							{{ form.answer(class="sign-in-input", placeholder="Answer") }}
+						</div>
+					</div>
+
+					<div id="sign-in-form-body-2">
+						<div>
+							<div>
+								<input name="remember" type="checkbox" checked>
+								Remember Me
+							</div>
+							<a href="{{ url_for('users.register') }}">Forgot Username?</a>
+						</div>
+
+						{{ form.submit(class="sign-in-form-submit", value="Submit", style="cursor: pointer;") }}
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+{% endblock%}

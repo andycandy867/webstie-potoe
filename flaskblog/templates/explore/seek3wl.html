@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block body %}
+	<div id="main-body">
+		<div class="explore-header">
+			<h2>Seek3wl's Posts</h2>
+		</div>
+
+		{% for post in seek3wl_posts %}
+			<article class="post-container">
+				<div class="post-header">
+					<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
+					<div class="post-header-info">
+						<a href="{{ url_for('users.user_posts', username=post.author.username) }}">
+							{{ post.author.username }}
+						</a>
+						<span>{{ length(post.author.followers) }} Followers</span>
+					</div>
+				</div>
+
+				<div class="post-title">
+					<a href="{{ url_for('posts.post', post_id=post.id) }}">{{ post.title }}</a>
+					{{ post.views }} views · {{ post.date_posted_ago() }}
+				</div>
+
+				<p class="post-content">{{ limit_content[post.id] }}</p>
+			</article>
+		{% endfor %}
+	</div>
+{% endblock %}

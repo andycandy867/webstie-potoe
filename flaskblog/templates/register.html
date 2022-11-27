@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block body %}
+	<div id="main-body">
+		<div id="sign-up-container">
+			<form id="sign-up-form" method="POST" action="{{ url_for('users.register') }}">
+				{{ form.hidden_tag() }}
+				<div>
+					<div id="sign-up-form-header">
+						<h1>Sign Up</h1>
+						Welcome
+					</div>
+
+					{% with messages = get_flashed_messages(with_categories=true) %} 
+						{% if messages %} 
+							{% for category, message in messages %}
+								<div class="sign-up-form-error">
+									{{ message }}
+								</div>
+							{% endfor %}
+						{% endif %}
+					{% endwith %}
+
+					<div id="sign-up-form-body">
+						<div class="sign-up-form-body-div">
+							{% if form.username.errors %}
+								{% for error in form.username.errors %}
+									<div class="sign-up-form-error">
+										{{ error }}
+									</div>
+								{% endfor %}
+							{% endif %}
+
+							{{ form.username(class="sign-up-input", placeholder="Username") }}						
+						</div>
+
+						<div class="sign-up-form-body-div">
+							{% if form.email.errors %}
+								{% for error in form.email.errors %}
+									<div class="sign-up-form-error">
+										{{ error }}
+									</div>
+								{% endfor %}
+							{% endif %}
+
+							{{ form.email(class="sign-up-input", placeholder="Email") }}
+						</div>
+
+						<div class="sign-up-form-body-div">
+							{% if form.password.errors %}
+								{% for error in form.password.errors %}
+									<div class="sign-up-form-error">
+										{{ error }}
+									</div>
+								{% endfor %}
+							{% endif %}
+
+							{{ form.password(class="sign-up-input", placeholder="Password") }}						
+						</div>
+
+						<div>
+							{% if form.confirm_password.errors %}
+								{% for error in form.confirm_password.errors %}
+									<div class="sign-up-form-error">
+										{{ error }}
+									</div>
+								{% endfor %}
+							{% endif %}
+
+							{{ form.confirm_password(class="sign-up-input", placeholder="Retype Password") }}
+						</div>
+
+						<div id="sign-up-form-body-2">
+							{{ form.submit(class="sign-up-form-submit", value="Sign Up", style="cursor: pointer;") }}
+						</div>
+					</div>
+				</div>
+
+				<span>
+					Already have an account?
+					<a href="{{ url_for('users.signin') }}">Sign In</a>
+				</span>
+			</form>
+		</div>
+	</div>
+
+{% endblock%}

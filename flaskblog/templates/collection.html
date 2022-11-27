@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block body %}
+	<div id="main-body">
+		<div id="collection-info-card">
+			<img height="180px" width="320px" src="{{ url_for('static', filename='images/banners/' + collection.author.banner_image) }}">
+			<div id="collection-info">
+				<h2>{{ collection.name }}</h2>
+				<p>
+					{{ length(collection.posts) }} Posts · 
+
+					{% if collection.date_updated_ago() %}
+						 Last updated {{ collection.date_updated_ago() }}
+					 {% else %}
+					 	Never Updated Before
+					{% endif %}
+				</p>
+			</div>
+			<div id="collection-creator">
+				<a href="{{ url_for('users.user_page', username=collection.author.username) }}">
+					<img height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + collection.author.image_file) }}">
+				</a>
+				<a href="{{ url_for('users.user_page', username=collection.author.username) }}">
+					<span>{{ collection.author.username }}</span>
+				</a>
+			</div>
+		</div>
+		<div id="collection-posts-container">
+			{% if collection.posts %}
+				{% for post in collection.posts %}
+					<article class="post-container">
+						<div class="post-header">
+							<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
+							<div class="post-header-info">
+								<a href="{{ url_for('users.user_posts', username=post.author.username) }}">
+									{{ post.author.username }}
+								</a>
+								<span>{{ length(post.author.followers) }} Followers</span>
+							</div>
+						</div>
+
+						<div class="post-title">
+							<a href="{{ url_for('posts.post', post_id=post.id) }}">{{ post.title }}</a>
+							{{ post.views }} views · {{ post.date_posted_ago() }}
+						</div>
+
+						<p class="post-content">{{ limit_content[post.id] }}</p>
+					</article>
+				{% endfor %}
+			{% else %}
+				<p>No posts here yet</p>
+			{% endif %}
+		</div>
+	</div>
+{% endblock body %}
