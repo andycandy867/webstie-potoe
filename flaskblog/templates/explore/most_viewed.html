@@ -10,9 +10,11 @@
 			{% for post in most_viewed_posts %}
 				<article class="post-container">
 					<div class="post-header">
-						<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
+						<a href="{{ url_for('users.user_page', username=post.author.username) }}">
+							<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
+						</a>
 						<div class="post-header-info">
-							<a href="{{ url_for('users.user_posts', username=post.author.username) }}">
+							<a href="{{ url_for('users.user_page', username=post.author.username) }}">
 								{{ post.author.username }}
 							</a>
 							<span>{{ length(post.author.followers) }} Followers</span>

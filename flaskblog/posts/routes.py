@@ -1,8 +1,9 @@
 import re
+from datetime import datetime
 from flask import render_template, url_for, flash, redirect, request, abort, Blueprint, make_response, jsonify
 from flask_login import current_user, login_required
 from flaskblog import db
-from flaskblog.models import Post, PostCache, Media, Comment
+from flaskblog.models import Post, PostCache, Media, Comment, Collection
 from flaskblog.posts.forms import PostForm, CommentForm
 from flaskblog.posts.utils import save_file, allowed_file
 
@@ -217,55 +218,142 @@ def delete_media():
 		return make_response(jsonify('failure'))
 
 
-@posts.route("/post/<int:post_id>")
+@posts.route("/post/<int:post_id>", methods=["GET", "POST"])
 def post(post_id):
 	post = Post.query.get_or_404(post_id)
-	comments = Comment.query.filter_by(post_id=post_id)
-	# order_by(Comment.likes.desc()) Once again, random or 'relevant'
 
-	# global comments
-	# comments = []
-	# for comment in Comment.query.filter_by(post_id=post_id):
-	# 	comments.append(comment.as_dict())
+	if request.method == "GET":
+		comments = Comment.query.filter_by(post_id=post_id).order_by(Comment.date_posted.desc())
+		# order_by(Comment.likes.desc()) Once again, random or 'relevant'
 
-	post_comment_form = CommentForm()
-	comment_comment_form = CommentForm()
+		# global comments
+		# comments = []
+		# for comment in Comment.query.filter_by(post_id=post_id):
+		# 	comments.append(comment.as_dict())
 
-	post_date_posted = post.date_posted_ago()
+		post_comment_form = CommentForm()
+		comment_comment_form = CommentForm()
 
-	author_followed = False
-	post_liked_status = 'undefined'
-	if current_user.is_authenticated:
-		# Post View
-		if post in current_user.posts_viewed:
-			current_user.posts_viewed.remove(post)
-			db.session.commit()
+		author_followed = False
+		post_liked_status = 'undefined'
+		if current_user.is_authenticated:
+			# Post View
+			if post in current_user.posts_viewed:
+				current_user.posts_viewed.remove(post)
+				db.session.commit()
 
-		current_user.posts_viewed.append(post)
+			current_user.posts_viewed.append(post)
 
-		# Post Like
-		if post in current_user.posts_liked:
-			post_liked_status = 'liked'
-		elif post in current_user.posts_disliked:
-			post_liked_status = 'disliked'
+			# Post Like
+			if post in current_user.posts_liked:
+				post_liked_status = 'liked'
+			elif post in current_user.posts_disliked:
+				post_liked_status = 'disliked'
 
-		# Author Following
-		if post.author in current_user.following:
-			author_followed = True
+			# Author Following
+			if post.author in current_user.following:
+				author_followed = True
 
-	splinted = re.split('{{|}}', post.content)
+		post_splinted = re.split('{{|}}', post.content)
 
-	for i, splint in enumerate(splinted):
-		if splint == '':
-			splinted.pop(i)
+		for i, splint in enumerate(post_splinted):
+			if splint == '':
+				post_splinted.pop(i)
 
-	post.views += 1
-	db.session.commit()
+		post.views += 1
+		db.session.commit()
 
-	return render_template('post.html', title=post.title, post=post, post_date_posted=post_date_posted,
-						   splinted=splinted, comments=comments, post_comment_form=post_comment_form,
-						   comment_comment_form=comment_comment_form, post_liked_status=post_liked_status,
-						   author_followed=author_followed)
+		# Recommended Posts
+		recommended_posts = Post.query.order_by(Post.views.desc()).limit(50).all()
+		# Filter by tags similar to this one, user similar to post user (tag + user > user > tag)
+
+		limit_content = {}
+		for recommended_post in recommended_posts:
+			splinted = re.split('{{|}}', recommended_post.content)
+
+			for i, splint in enumerate(splinted):
+				if splint == '':
+					splinted.pop(i)
+				elif '*/#|>' in splint:
+					splinted.pop(i)
+
+			if len(splinted[0].split()) > 17:
+				limit_content[recommended_post.id] = splinted[0].split('\n')[0]
+			else:
+				limit_content[recommended_post.id] = splinted[0] + '...'
+
+		# Collection
+		list_arg = request.args.get("list")
+		collection = None
+
+		if list_arg:
+			if list_arg == 'RL':
+				collection = Collection.query.filter_by(user_id=current_user.id, type='RL').first()
+			elif list_arg == 'archived':
+				collection = Collection.query.filter_by(user_id=current_user.id, type='archived').first()
+			else:
+				collection = Collection.query.get_or_404(list_arg)
+
+				if collection.type:
+					if collection.type == 'RL':
+						return redirect(url_for('posts.post', post_id=post.id, list='RL'))
+					elif collection.type == 'archived':
+						return redirect(url_for('posts.post', post_id=post.id, list='archived'))
+
+		if collection:
+			for collection_post in collection.posts:
+				splinted = re.split('{{|}}', collection_post.content)
+
+				for i, splint in enumerate(splinted):
+					if splint == '':
+						splinted.pop(i)
+					elif '*/#|>' in splint:
+						splinted.pop(i)
+
+				if len(splinted[0].split()) > 17:
+					limit_content[collection_post.id] = splinted[0].split('\n')[0]
+				else:
+					limit_content[collection_post.id] = splinted[0] + '...'
+
+		return render_template("post.html", title=post.title, post=post, post_splinted=post_splinted, comments=comments,
+							   post_comment_form=post_comment_form, comment_comment_form=comment_comment_form,
+							   post_liked_status=post_liked_status, author_followed=author_followed,
+							   recommended_posts=recommended_posts, list_arg=list_arg, collection=collection,
+							   limit_content=limit_content)
+	elif request.method == "POST":
+		action = request.args.get("action")
+
+		if action == "create_new_collection":
+			# Validate length of request.json.get("name")
+			if current_user.is_authenticated:
+				collection = Collection(user_id=current_user.id, name=request.json.get("name"))
+				db.session.add(collection)
+				db.session.commit()
+
+				response = make_response(jsonify({"status": "success",
+												  "collection_id": collection.id,
+												  "collection_name": collection.name}))
+			else:
+				response = make_response(jsonify({"status": "failure"}))
+		elif action == "update_existing_collection":
+			collection = Collection.query.get(request.json.get("collection_id"))
+
+			if collection and current_user.id == collection.user_id:
+				if post in collection.posts:
+					collection.posts.remove(post)
+					response = make_response(jsonify({"status": "success"}))
+				else:
+					collection.posts.append(post)
+					response = make_response(jsonify({"status": "success"}))
+
+				collection.date_updated = datetime.utcnow()
+				db.session.commit()
+			else:
+				response = make_response(jsonify({"status": "failure"}))
+		else:
+			response = make_response(jsonify({"status": "failure"}))
+
+		return response
 
 
 # Infinite load comments (When Implement)

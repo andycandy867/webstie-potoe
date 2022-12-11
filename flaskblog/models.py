@@ -125,32 +125,27 @@ class User(db.Model, UserMixin):
 		return f"User('{self.username}', '{self.email}', '{self.image_file}')"
 
 
-def get_duration(then, now=datetime.now()):
-	duration = now - then
+def get_duration(then):
+	duration = datetime.utcnow() - then
 	duration_in_s = duration.total_seconds()
 
 	def years():
 		return divmod(duration_in_s, 31536000)  # Seconds in a year=31536000.
 
-	def months(seconds=None):
-		return divmod(seconds if seconds != None else duration_in_s, 2628000)  # Seconds in a month = 2628000
+	def months():
+		return divmod(duration_in_s, 2628000)  # Seconds in a month = 2628000
 
-	def weeks(seconds=None):
-		return divmod(seconds if seconds != None else duration_in_s, 604800)  # Seconds in a week = 604800
+	def weeks():
+		return divmod(duration_in_s, 604800)  # Seconds in a week = 604800
 
-	def days(seconds=None):
-		return divmod(seconds if seconds != None else duration_in_s, 86400)  # Seconds in a day = 86400
+	def days():
+		return divmod(duration_in_s, 86400)  # Seconds in a day = 86400
 
-	def hours(seconds=None):
-		return divmod(seconds if seconds != None else duration_in_s, 3600)  # Seconds in an hour = 3600
+	def hours():
+		return divmod(duration_in_s, 3600)  # Seconds in an hour = 3600
 
-	def minutes(seconds=None):
-		return divmod(seconds if seconds != None else duration_in_s, 60)  # Seconds in a minute = 60
-
-	def seconds(seconds=None):
-		if seconds != None:
-			return divmod(seconds, 1)
-		return duration_in_s
+	def minutes():
+		return divmod(duration_in_s, 60)  # Seconds in a minute = 60
 
 	time_difference = {
 		'years': int(years()[0]),
@@ -159,20 +154,20 @@ def get_duration(then, now=datetime.now()):
 		'days': int(days()[0]),
 		'hours': int(hours()[0]),
 		'minutes': int(minutes()[0]),
-		'seconds': int(seconds())
+		'seconds': int(duration_in_s)
 	}
 
-	if time_difference['years'] != 0:
+	if time_difference['years'] > 0:
 		final_time_difference = {'unit': 'year', 'amount': time_difference['years']}
-	elif time_difference['months'] != 0:
+	elif time_difference['months'] > 0:
 		final_time_difference = {'unit': 'month', 'amount': time_difference['months']}
-	elif time_difference['weeks'] != 0:
+	elif time_difference['weeks'] > 0:
 		final_time_difference = {'unit': 'week', 'amount': time_difference['weeks']}
-	elif time_difference['days'] != 0:
+	elif time_difference['days'] > 0:
 		final_time_difference = {'unit': 'day', 'amount': time_difference['days']}
-	elif time_difference['hours'] != 0:
+	elif time_difference['hours'] > 0:
 		final_time_difference = {'unit': 'hour', 'amount': time_difference['hours']}
-	elif time_difference['minutes'] != 0:
+	elif time_difference['minutes'] > 0:
 		final_time_difference = {'unit': 'minute', 'amount': time_difference['minutes']}
 	else:
 		final_time_difference = {'unit': 'second', 'amount': time_difference['seconds']}
@@ -251,6 +246,10 @@ class Comment(db.Model):
 	date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 	content = db.Column(db.Text, nullable=False)
 
+	def date_posted_ago(self):
+		date_posted = getattr(self, 'date_posted')
+		return get_duration(date_posted)
+
 	def as_dict(self):
 		dictionary = {}
 		for c in self.__table__.columns:
@@ -287,11 +286,10 @@ class Collection(db.Model):
 	posts = db.relationship('Post', secondary=post_collection, backref='parent_collection')
 
 	def date_updated_ago(self):
-		date_posted = getattr(self, 'date_updated')
-		if not date_posted:
-			return None
-		else:
-			return get_duration(date_posted)
+		date_updated = getattr(self, "date_updated")
+
+		if date_updated:
+			return get_duration(date_updated)
 
 
 class Tag(db.Model):

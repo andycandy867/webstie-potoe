@@ -111,9 +111,9 @@
 										</div>
 
 										{% if is_media(text) == 'Empty' %}
-											<textarea name="{{ item.value }}" class="create-post-textarea" name="textarea-{{ item.value }}"></textarea>
+											<textarea name="{{ item.value }}" class="create-post-textarea"></textarea>
 										{% else %}
-											<textarea name="{{ item.value }}" class="create-post-textarea" name="textarea-{{ item.value }}">{{ text }}</textarea>
+											<textarea name="{{ item.value }}" class="create-post-textarea">{{ text }}</textarea>
 										{% endif %}
 									</div>
 								{% endif %}

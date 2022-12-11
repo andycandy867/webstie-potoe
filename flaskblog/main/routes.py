@@ -1,7 +1,7 @@
 import re
 from flask import render_template, request, Blueprint, url_for, redirect, make_response, jsonify
 from flask_login import current_user, login_required
-from flaskblog.models import Post, User, PostCache
+from flaskblog.models import Post, User, PostCache, Collection
 from flaskblog.main.forms import SearchForm
 from sqlalchemy.sql.expression import func
 
@@ -9,7 +9,7 @@ from sqlalchemy.sql.expression import func
 main = Blueprint('main', __name__)
 
 
-# Gives variables to the base template/ all templates
+# Gives variables to the base template/all templates
 @main.app_context_processor
 def inject_template_globals():
 	if current_user.is_authenticated:
@@ -69,19 +69,32 @@ def search():
 		user_query = User.query.filter(User.username.like('%' + searched_for + '%'))
 
 		display_user = user_query.first()
-		for user in user_query:
-			if user.followers > display_user.followers:
-				display_user = user
+		display_user_posts = []
 
-		posts = title_post_query.order_by(Post.title).all() + content_post_query.order_by(Post.title).all()
+		if display_user:
+			for user in user_query.all():
+				if user.followers > display_user.followers:
+					display_user = user
+
+			display_user_posts = Post.query.filter_by(user_id=user.id).order_by(Post.views.desc()).limit(3).all()
+
+		posts = title_post_query.union(content_post_query).order_by(Post.views.desc()).all()
 		limit_content = {}
-		for post in posts:
-			if len(post.content.split()) > 17:
-				limit_content[post.id] = post.content.split('\n')[0]
+		for post in posts + display_user_posts:
+			splinted = re.split('{{|}}', post.content)
+
+			for i, splint in enumerate(splinted):
+				if splint == '':
+					splinted.pop(i)
+				elif '*/#|>' in splint:
+					splinted.pop(i)
+
+			if len(splinted[0].split()) > 17:
+				limit_content[post.id] = splinted[0].split('\n')[0]
 			else:
-				limit_content[post.id] = post.content
+				limit_content[post.id] = splinted[0] + '...'
 		return render_template('results.html', form=form, searched=searched_for, limit_content=limit_content, posts=posts,
-							   user=display_user)
+							   user=display_user, display_user_posts=display_user_posts)
 
 	return redirect(url_for('main.home'))
 
@@ -154,7 +167,7 @@ def explore():
 							   limit_content=limit_content)
 	elif explore_option == 'seek3wl':
 		seek3wl = User.query.filter_by(username='seek3wl').first()
-		seek3wl_posts = Post.query.filter_by(user_id=seek3wl.id).all()
+		seek3wl_posts = Post.query.filter_by(user_id=seek3wl.id).order_by(Post.date_posted.desc()).all()
 
 		limit_content = {}
 		for post in seek3wl_posts:
@@ -175,8 +188,8 @@ def explore():
 	elif explore_option == 'osu-mania':
 		return render_template('/explore/osu_mania.html', title='Osu Mania')
 	else:
-		featured_posts = Post.query.order_by(Post.views.desc())[0:3]
-		trending_posts = Post.query.order_by(Post.views.desc())[0:30]
+		featured_posts = Post.query.order_by(Post.views.desc()).limit(3).all()
+		trending_posts = Post.query.order_by(Post.views.desc()).limit(30).all()
 
 		limit_content = {}
 		for post in featured_posts + trending_posts:
@@ -206,6 +219,8 @@ def random():
 @main.route('/library')
 @login_required
 def library():
+	created_collections = Collection.query.filter_by(user_id=current_user.id).order_by(Collection.date_updated.desc())
+
 	historical_posts = current_user.posts_viewed
 	historical_posts_count = len(historical_posts) - 3
 	historical_posts.reverse()
@@ -265,12 +280,14 @@ def library():
 		else:
 			created_posts_limit_content[created_post.id] = splinted[0] + '...'
 
-	return render_template('library.html', title='Library', historical_posts=historical_posts,
+	return render_template('library.html', title='Library', created_collections=created_collections,
+						   historical_posts=historical_posts,
 						   historical_posts_limit_content=historical_posts_limit_content,
 						   historical_posts_count=historical_posts_count, liked_posts=liked_posts,
 						   liked_posts_limit_content=liked_posts_limit_content,
 						   liked_posts_count=liked_posts_count, created_posts=created_posts,
-						   created_posts_limit_content=created_posts_limit_content, created_posts_count=created_posts_count)
+						   created_posts_limit_content=created_posts_limit_content,
+						   created_posts_count=created_posts_count)
 
 
 @main.route('/following')

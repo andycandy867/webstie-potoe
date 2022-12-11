@@ -9,16 +9,20 @@
 			<div class="following-body">
 				{% if followed_users %}
 					{% for user in followed_users %}
-						<div class="followed-user">
-							<img class="followed-user-img" height="128" width="128" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + user.image_file) }}">
-							<div class="followed-user-info-container">
-								<h3>{{ user.username }}</h3>
-								<div class="followed-user-followers-posts">
-									{{ length(user.followers) }} Followers • {{ followed_users_posts_count[user.id] }} Posts
+						<a href="{{ url_for('users.user_page', username=user.username) }}" style="text-decoration: none;">
+							<div class="followed-user">
+								<img class="followed-user-img" height="128" width="128" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + user.image_file) }}">
+								<div class="followed-user-info-container">
+									<h3>{{ user.username }}</h3>
+									<div class="followed-user-followers-posts">
+										{{ length(user.followers) }} Followers • {{ followed_users_posts_count[user.id] }} Posts
+									</div>
+									{% if user.description %}
+										<p class="followed-user-description">{{ user.description }}</p>
+									{% endif %}
 								</div>
-								<p class="followed-user-description"><!-- user description --></p>
 							</div>
-						</div>
+						</a>
 					{% endfor %}
 
 					{% if length(current_user.following) > 3 %}
@@ -41,9 +45,11 @@
 					{% for post in followed_users_posts %}
 						<article class="post-container">
 							<div class="post-header">
-								<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
+								<a href="{{ url_for('users.user_page', username=post.author.username) }}">
+									<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
+								</a>
 								<div class="post-header-info">
-									<a href="{{ url_for('users.user_posts', username=post.author.username) }}">
+								<a href="{{ url_for('users.user_page', username=post.author.username) }}">
 										{{ post.author.username }}
 									</a>
 									<span>{{ length(post.author.followers) }} Followers</span>

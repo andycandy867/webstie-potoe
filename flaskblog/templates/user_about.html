@@ -52,10 +52,39 @@
 			</div>
 
 			<div id="user-page-body" style="flex-direction: row; gap: 64px;">
-				<div id="user-description">
-					{% if user.description %}
-						<h2>Description</h2>
-						<p>{{ user.description }}</p>
+				<div id="user-description-container">
+					{% if current_user == user %}
+						{% if user.description %}
+							<h2>Description</h2>
+							<p id="user-description" style="display: block;">{{ user.description }}</p>
+							<button id="edit-description-button" type="button" onclick="edit_description_toggle()" style="display: block;">Edit Description</button>
+
+							<form id="user-description-form" method="POST" style="display: none;">
+								{{ form.hidden_tag() }}
+								{{ form.description(id="user-description-textarea", placeholder="Enter a description about yourself...") }}
+								<script type="text/javascript">
+									document.querySelector("#user-description-textarea").value = `{{ user.description }}`
+								</script>
+								<div style="display: flex;">
+									<button id="user-description-cancel" type="button" onclick="edit_description_toggle()">Cancel</button>
+									{{ form.submit(id="user-description-submit", type="submit") }}
+								</div>
+							</form>
+						{% else %}
+							<h2>Description</h2>
+							<form id="user-description-form" method="POST">
+								{{ form.hidden_tag() }}
+								{{ form.description(id="user-description-textarea", placeholder="Enter a description about yourself...") }}
+								{{ form.submit(id="user-description-submit", type="submit") }}
+							</form>
+						{% endif %}
+					{% else %}
+						{% if user.description %}
+							<h2>Description</h2>
+							<p id="user-description">{{ user.description }}</p>
+						{% else %}
+							<h2>Description</h2>
+						{% endif %}
 					{% endif %}
 				</div>
 				<div>

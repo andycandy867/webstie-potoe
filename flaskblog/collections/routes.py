@@ -1,3 +1,4 @@
+import re
 from flask import render_template, url_for, flash, redirect, request, abort, Blueprint, make_response, jsonify
 from flask_login import current_user, login_required
 from flaskblog import db
@@ -27,11 +28,32 @@ def collection():
 					elif collection.type == 'archived':
 						return redirect(url_for('collections.collection', list='archived'))
 
-			last_updated = collection.date_updated_ago()
+			limit_content = {}
+			for post in collection.posts:
+				splinted = re.split('{{|}}', post.content)
+
+				for i, splint in enumerate(splinted):
+					if splint == '':
+						splinted.pop(i)
+					elif '*/#|>' in splint:
+						splinted.pop(i)
+
+				if len(splinted[0].split()) > 17:
+					limit_content[post.id] = splinted[0].split('\n')[0]
+				else:
+					limit_content[post.id] = splinted[0] + '...'
 
 			return render_template('collection.html', title=collection.name, collection=collection,
-								   last_updated=last_updated)
+								   collection_id=collection_id, limit_content=limit_content)
 		else:
 			return redirect(url_for('main.home'))
 	elif request.method == "POST":
-		pass
+		collection = Collection.query.get_or_404(collection_id)
+
+		if current_user.id == collection.user_id and not collection.type:
+			db.session.delete(collection)
+			db.session.commit()
+			flash(f'Collection "{collection.name}" has successfully been deleted', "success")
+			return redirect(url_for("main.home"))
+		else:
+			return redirect(url_for("collections.collection", list=collection.id))

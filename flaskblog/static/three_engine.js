@@ -402,10 +402,10 @@ function before_opening_sequence() {
 				setTimeout(() => {
 					before_title.remove()
 					opening_sequence();
-				}, 1) //5000
+				}, 5000) //5000
 			}
 		})
-	}, 1) //8000
+	}, 8000) //8000
 }
 
 function opening_sequence() {

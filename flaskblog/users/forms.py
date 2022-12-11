@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SelectField, SubmitField
+from wtforms import StringField, TextAreaField, PasswordField, BooleanField, SelectField, SubmitField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from flaskblog.models import User
 
@@ -35,4 +35,9 @@ class RequestResetForm(FlaskForm):
 	email = StringField('Email', validators=[DataRequired(), Email()])
 	question = SelectField('Security Question', choices=['What state were you born in?', 'What is the name of your favorite pet?'], validators=[DataRequired()])
 	answer = StringField('Answer', validators=[DataRequired()])
+	submit = SubmitField('Submit')
+
+
+class UpdateDescriptionForm(FlaskForm):
+	description = TextAreaField('Description', validators=[DataRequired()])
 	submit = SubmitField('Submit')

@@ -18,62 +18,67 @@
 		<nav class="top-nav">
 			<div class="nav-left">
 				<div class="side-menu-container">
-					<i id="menu-img" class="fa fa-bars"></i>
+					<i id="menu-img" class="fa fa-bars" aria-hidden="true"></i>
 					<div id="side-menu" style="width: 0px; display: none;">
 						<div class="side-menu-div">
 							<a href="{{ url_for('main.home') }}">
-								<i class="fa fa-home"></i>
+								<i class="fa fa-home" aria-hidden="true"></i>
 								<span>Home</span>
 							</a>
 							<a href="{{ url_for('main.explore') }}">
-								<i class="fa fa-compass"></i>
+								<i class="fa fa-compass" aria-hidden="true"></i>
 								<span>Explore</span>
 							</a>
 							<a href="{{ url_for('main.random') }}">
-								<i class="fa fa-random"></i>
+								<i class="fa fa-random" aria-hidden="true"></i>
 								<span>Random</span>
 							</a>
 							<a href="{{ url_for('main.following') }}">
-								<i class="fa fa-user-circle-o"></i>
+								<i class="fa fa-user-circle-o" aria-hidden="true"></i>
 								<span>Following</span>
 							</a>
 						</div>
 						<div class="side-menu-div">
 							<a href="{{ url_for('main.library') }}">
-								<i class="fa fa-book"></i>
+								<i class="fa fa-book" aria-hidden="true"></i>
 								<span>Library</span>
 							</a>
 							<a href="{{ url_for('main.history') }}">
-								<i class="fa fa-history"></i>
+								<i class="fa fa-history" aria-hidden="true"></i>
 								<span>History</span>
 							</a>
 							<a href="{{ url_for('main.liked') }}">
-								<i class="fa fa-thumbs-up"></i>
+								<i class="fa fa-thumbs-up" aria-hidden="true"></i>
 								<span>Liked</span>
 							</a>
 							<a href="{{ url_for('collections.collection', list='RL') }}">
-								<i class="fa fa-clock-o"></i>
+								<i class="fa fa-clock-o" aria-hidden="true"></i>
 								<span>Read Later</span>
 							</a>
 							<a href="{{ url_for('collections.collection', list='archived') }}">
-								<i class="fa fa-bookmark"></i>
+								<i class="fa fa-bookmark" aria-hidden="true"></i>
 								<span>Archived</span>
 							</a>
 							{% if length(current_user.collections) > 2 %}
-								<button id="expand">
-									<i class="fa fa-angle-down"></i>
+								<button class="collections-toggle-button" id="collections-expand-button" style="display: flex;">
+									<i class="fa fa-angle-down" aria-hidden="true"></i>
 									<span>Show More</span>
 								</button>
 
-								<div id="expanded">
+								<div id="collections-expanded" style="display: none;">
 									{% for collection in current_user.collections %}
 										{% if not collection.type %}
 											<a href="{{ url_for('collections.collection', list=collection.id) }}">
-												<i class="fa fa-list"></i>
+												<i class="fa fa-list" aria-hidden="true"></i>
 												<span>{{ collection.name }}</span>
 											</a>
 										{% endif %}
 									{% endfor %}
+
+									<button class="collections-toggle-button" id="collections-collapse-button">
+										<i class="fa fa-angle-up" aria-hidden="true"></i>
+										<span>Show Less</span>
+									</button>
 								</div>
 							{% endif %}
 						</div>
@@ -92,17 +97,15 @@
 				</div>
 				<a href="{{ url_for('main.home') }}">Blog</a>
 			</div>
+
 			<form method="POST" action="{{ url_for('main.search') }}" id="search-container">
-				{{ SearchForm.hidden_tag() }}
-				<input id="search-input" type="search" name="searched" placeholder="Search">
-				<script type="text/javascript">
-					search_input = document.querySelector('#search-input')
-					search_input.setAttribute("value", "{{ searched }}");
-				</script>
-				<button id="search-button">
-					<i id="search-icon" class="fa fa-search"></i>
+				{{ SearchForm.csrf_token(id="search_csrf_token") }}
+				<input id="search-input" type="search" name="searched" placeholder="Search" value="{{ searched }}">
+				<button id="search-button" type="submit">
+					<i id="search-icon" class="fa fa-search" aria-hidden="true"></i>
 				</button>
 			</form>
+
 			<div class="nav-right">
 				{% if current_user.is_authenticated %}
 					{% if has_post_cache %}
@@ -127,17 +130,16 @@
 					<div class="dropdown-container-center">
 						<img id="kebab-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='icons/kebab_menu.png') }}"/>
 						<div id="preferences-menu" class="dropdown-menu" style="display: none;">
-							<label class="switch" for="theme-switch">
-								<input id="theme-switch" type="checkbox">
-								<div class="slider round"></div>
-							</label>
+							<label class="switch" for="theme-switch"></label>
+							<input id="theme-switch" type="checkbox">
+							<div class="slider round"></div>
 							<a href="{{ url_for('main.about') }}">About</a>
 						</div>
 					</div>
 
 					<a href="{{ url_for('users.signin') }}">
 						<div id="sign-in-button">
-							<i id="sign-in-icon" class="fa fa-user-circle-o"></i>
+							<i id="sign-in-icon" class="fa fa-user-circle-o" aria-hidden="true"></i>
 							Sign In
 						</div>
 					</a>
@@ -148,31 +150,31 @@
 		<nav class="left-nav">
 			<a href="{{ url_for('main.home') }}">		
 				<div>
-					<i class="fa fa-home"></i>
+					<i class="fa fa-home" aria-hidden="true"></i>
 					Home
 				</div>
 			</a>
 			<a href="{{ url_for('main.explore') }}">
 				<div>
-					<i class="fa fa-compass"></i>
+					<i class="fa fa-compass" aria-hidden="true"></i>
 					Explore
 				</div>
 			</a>
 			<a href="{{ url_for('main.random') }}">
 				<div>
-					<i class="fa fa-random"></i>
+					<i class="fa fa-random" aria-hidden="true"></i>
 					Random
 				</div>
 			</a>
 			<a href="{{ url_for('main.following') }}">
 				<div>
-					<i class="fa fa-user-circle-o"></i>
+					<i class="fa fa-user-circle-o" aria-hidden="true"></i>
 					Following
 				</div>
 			</a>
 			<a href="{{ url_for('main.library') }}">
 				<div>
-					<i class="fa fa-book"></i>
+					<i class="fa fa-book" aria-hidden="true"></i>
 					Library
 				</div>
 			</a>

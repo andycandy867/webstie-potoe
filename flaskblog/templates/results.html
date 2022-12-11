@@ -27,33 +27,71 @@
 			</div>
 		</div>
 
-		{% if posts%}
-			{% for post in posts %}
-				<article class="post-container">
-					<div class="post-header">
-						<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
-						<div class="post-header-info">
-							<a href="{{ url_for('users.user_posts', username=post.author.username) }}">
-								{{ post.author.username }}
-							</a>
-							<span>{{ length(post.author.followers) }} Followers</span>
+		{% if user or posts %}
+			{% if user %}
+				<a href="{{ url_for('users.user_page', username=user.username) }}" style="text-decoration: none;">
+					<div class="result-user">
+						<img class="result-user-img" height="128" width="128" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + user.image_file) }}">
+						<div class="result-user-info-container">
+							<h3>{{ user.username }}</h3>
+							<div class="result-user-followers-posts">
+								{{ length(user.followers) }} Followers • {{length(user.posts)}} Posts
+							</div>
+							{% if user.description %}
+								<p class="result-user-description">{{ user.description }}</p>
+							{% endif %}
 						</div>
 					</div>
-
-					<div class="post-title">
-						<a href="{{ url_for('posts.post', post_id=post.id) }}">{{ post.title }}</a>
-						{{ post.views }} views · {{ post.date_posted_ago() }}
-					</div>
-
-					<p class="post-content">{{ limit_content[post.id] }}</p>
-				</article>
-			{% endfor %}
-		{% elif user %}
-			<article class="user-container">
-				<a href="{{ url_for('users.user_page', username=user.username) }}">
-					<h1>{{ user.username }}</h1>
 				</a>
-			</article>
+
+				{% for post in display_user_posts %}
+					<article class="post-container">
+						<div class="post-header">
+							<a href="{{ url_for('users.user_page', username=post.author.username) }}">
+								<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
+							</a>
+							<div class="post-header-info">
+								<a href="{{ url_for('users.user_page', username=post.author.username) }}">
+									{{ post.author.username }}
+								</a>
+								<span>{{ length(post.author.followers) }} Followers</span>
+							</div>
+						</div>
+
+						<div class="post-title">
+							<a href="{{ url_for('posts.post', post_id=post.id) }}">{{ post.title }}</a>
+							{{ post.views }} views · {{ post.date_posted_ago() }}
+						</div>
+
+						<p class="post-content">{{ limit_content[post.id] }}</p>
+					</article>
+				{% endfor %}
+			{% endif %}
+
+			{% if posts %}
+				{% for post in posts %}
+					<article class="post-container">
+						<div class="post-header">
+							<a href="{{ url_for('users.user_page', username=post.author.username) }}">
+								<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
+							</a>
+							<div class="post-header-info">
+								<a href="{{ url_for('users.user_page', username=post.author.username) }}">
+									{{ post.author.username }}
+								</a>
+								<span>{{ length(post.author.followers) }} Followers</span>
+							</div>
+						</div>
+
+						<div class="post-title">
+							<a href="{{ url_for('posts.post', post_id=post.id) }}">{{ post.title }}</a>
+							{{ post.views }} views · {{ post.date_posted_ago() }}
+						</div>
+
+						<p class="post-content">{{ limit_content[post.id] }}</p>
+					</article>
+				{% endfor %}
+			{% endif %}
 		{% else %}
 			<h1>No Results Found</h1>
 		{% endif %}

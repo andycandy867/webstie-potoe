@@ -3,7 +3,7 @@ from flask import render_template, url_for, flash, redirect, request, Blueprint,
 from flask_login import login_user, current_user, logout_user
 from flaskblog import db, bcrypt
 from flaskblog.models import User, Post, Collection
-from flaskblog.users.forms import RegistrationForm, SignInForm, RequestResetForm
+from flaskblog.users.forms import RegistrationForm, SignInForm, RequestResetForm, UpdateDescriptionForm
 
 users = Blueprint('users', __name__)
 
@@ -143,23 +143,35 @@ def user_collections(username):
 	user_collections=user_collections)
 
 
-@users.route('/user/<string:username>/about')
+@users.route('/user/<string:username>/about', methods=["GET", "POST"])
 def user_about(username):
+	form = None
 	user = User.query.filter_by(username=username).first_or_404()
 
-	user_followed = False
-	if current_user.is_authenticated:
-		if user in current_user.following:
-			user_followed = True
+	if request.method == "GET":
+		user_followed = False
+		if current_user.is_authenticated:
+			form = UpdateDescriptionForm()
+			if user in current_user.following:
+				user_followed = True
 
-	user_date_joined = user.date_joined.strftime("%b %d %Y")
+		user_date_joined = user.date_joined.strftime("%b %d %Y")
 
-	user_total_views = 0
-	for post in user.posts:
-		user_total_views += post.views
+		user_total_views = 0
+		for post in user.posts:
+			user_total_views += post.views
 
-	return render_template('user_about.html', title=username, user=user, user_followed=user_followed,
-						   user_date_joined=user_date_joined, user_total_views=user_total_views)
+		return render_template('user_about.html', title=username, user=user, user_followed=user_followed,
+							   user_date_joined=user_date_joined, user_total_views=user_total_views, form=form)
+	elif request.method == "POST":
+		form = UpdateDescriptionForm()
+
+		if form.validate_on_submit():
+			if current_user == user:
+				current_user.description = form.description.data
+				db.session.commit()
+
+		return redirect(url_for("users.user_about", username=user.username))
 
 
 @users.route('/user/follow', methods=["POST"])
