@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, TextAreaField, PasswordField, BooleanField, SelectField, SubmitField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from flaskblog.models import User
@@ -36,6 +37,11 @@ class RequestResetForm(FlaskForm):
 	question = SelectField('Security Question', choices=['What state were you born in?', 'What is the name of your favorite pet?'], validators=[DataRequired()])
 	answer = StringField('Answer', validators=[DataRequired()])
 	submit = SubmitField('Submit')
+
+
+class UpdateBannerImageForm(FlaskForm):
+	image_file = FileField(validators=[FileAllowed(['png', 'jpg', 'gif'])])
+	submit = SubmitField()
 
 
 class UpdateDescriptionForm(FlaskForm):

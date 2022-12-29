@@ -3,7 +3,7 @@ from datetime import datetime
 from itsdangerous import URLSafeTimedSerializer as Serializer
 from flask import current_app
 from flaskblog import db, login_manager
-from flask_login import UserMixin
+from flask_login import UserMixin, current_user
 
 
 @login_manager.user_loader
@@ -71,7 +71,7 @@ class User(db.Model, UserMixin):
 	id = db.Column(db.Integer, primary_key=True)
 	username = db.Column(db.String(16), unique=True, nullable=False)
 	email = db.Column(db.String(120), unique=True, nullable=False)
-	image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
+	image_file = db.Column(db.String(20), nullable=False, default='default.png')
 	banner_image = db.Column(db.String(20), nullable=False, default='default_banner.jpg')
 	description = db.Column(db.String(120), nullable=True)
 	password = db.Column(db.String(60), nullable=False)
@@ -91,6 +91,7 @@ class User(db.Model, UserMixin):
 	def unfollow(self, user):
 		if user in self.following:
 			self.following.remove(user)
+
 	media_uploads = db.relationship('Media', backref='uploader', lazy=True)
 
 	posts_cached = db.relationship('PostCache', backref='cache_author', lazy=True)
@@ -181,7 +182,8 @@ def get_duration(then):
 class Post(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-	title = db.Column(db.String(100), nullable=False)
+	title = db.Column(db.String(120), nullable=False)
+	description = db.Column(db.Text, nullable=True)
 	date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 	content = db.Column(db.Text, nullable=False)
 
@@ -198,10 +200,20 @@ class Post(db.Model):
 		date_posted = getattr(self, 'date_posted')
 		return get_duration(date_posted)
 
+	def collections_apart_of(self):
+		collections_apart_of_list = []
+
+		if current_user.is_authenticated:
+			for collection in current_user.collections:
+				if self in collection.posts:
+					collections_apart_of_list.append(collection.id)
+
+		return collections_apart_of_list
+
 	def as_dict(self):
 		dictionary = {}
 		for c in self.__table__.columns:
-			if c.name not in ['user_id', 'content', 'comments', 'tags', 'date_posted']:
+			if c.name not in ['user_id', 'content', 'comments', 'tags', 'date_posted', 'likes']:
 				dictionary[c.name] = getattr(self, c.name)
 			elif c.name == 'user_id':
 				user = User.query.get(getattr(self, c.name))
@@ -224,8 +236,9 @@ class Post(db.Model):
 				if len(splinted[0].split()) > 17:
 					dictionary['content'] = splinted[0].split('\n')[0]
 				else:
-					dictionary['content'] = splinted[0] + '	...'
+					dictionary['content'] = splinted[0] + '...'
 
+		dictionary["collections_apart_of"] = self.collections_apart_of()
 		return dictionary
 
 
@@ -234,6 +247,7 @@ class PostCache(db.Model):
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 	post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=True)
 	date_cached = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+	description = db.Column(db.Text, nullable=True)
 	title = db.Column(db.String(100), default='', nullable=False)
 	content = db.Column(db.Text, default='', nullable=False)
 
@@ -277,10 +291,11 @@ class Media(db.Model):
 
 class Collection(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
-	type = db.Column(db.String(10), nullable=True)
+	type = db.Column(db.String(2), nullable=True)
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 	name = db.Column(db.String(30), nullable=False)
-	image_file = db.Column(db.String(20), nullable=False, default='default_banner.jpg')
+	description = db.Column(db.Text, nullable=True)
+	image_file = db.Column(db.String(20), nullable=True, default='default_banner.jpg')
 	date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 	date_updated = db.Column(db.DateTime, nullable=True)
 	posts = db.relationship('Post', secondary=post_collection, backref='parent_collection')
@@ -295,4 +310,4 @@ class Collection(db.Model):
 class Tag(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	name = db.Column(db.String(30), nullable=False)
-	color = db.Column(db.String(7), default='#808080', nullable=False)
+	color = db.Column(db.String(7), default='#aaa', nullable=False)

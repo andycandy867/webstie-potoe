@@ -11,7 +11,7 @@ class UpdateAccountForm(FlaskForm):
 	email = StringField(validators=[DataRequired(), Email()])
 	question = SelectField('Security Question', choices=['What state were you born in?', 'What is the name of your favorite pet?'])
 	answer = StringField()
-	picture = FileField(validators=[FileAllowed(['png', 'jpg'])])
+	picture = FileField(validators=[FileAllowed(['png', 'jpg', 'jpeg', 'gif'])])
 	save_changes = SubmitField()
 
 	def validate_username(self, username):

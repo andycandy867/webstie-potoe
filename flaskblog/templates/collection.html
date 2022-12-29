@@ -1,74 +1,253 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block body %}
 	<div id="main-body">
-		<div id="collection-info-card">
-			<img width="100%" src="{{ url_for('static', filename='images/banners/' + collection.author.banner_image) }}">
-			<div id="collection-info">
-				<h2>{{ collection.name }}</h2>
-				<span>
-					{{ length(collection.posts) }} Posts · 
+		<div id="collection-container">
+			<div class="collection-info-card">
+				<div class="collection-image-container">
+					{% if not collection.type %}
+						{% if current_user.id == collection.author.id %}
+							<button id="collection-change-image" onclick="show_collection_change_image_modal()">
+								<!-- Pencil Icon -->
+								<svg xmlns="http://www.w3.org/2000/svg" width="36px" height="36px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 36 36">
+									<path fill="currentColor" d="M33.87 8.32L28 2.42a2.07 2.07 0 0 0-2.92 0L4.27 23.2l-1.9 8.2a2.06 2.06 0 0 0 2 2.5a2.14 2.14 0 0 0 .43 0l8.29-1.9l20.78-20.76a2.07 2.07 0 0 0 0-2.92ZM12.09 30.2l-7.77 1.63l1.77-7.62L21.66 8.7l6 6ZM29 13.25l-6-6l3.48-3.46l5.9 6Z"/>
+									<path fill="none" d="M0 0h36v36H0z"/>
+								</svg>
+								<h3>Change Image</h3>
+							</button>
+						{% endif %}
 
-					{% if collection.date_updated_ago() %}
-						 Last updated {{ collection.date_updated_ago() }}
-					 {% else %}
-					 	Never Updated Before
+						<img class="collection-image" width="320px" height="180px" src="{{ url_for('static', filename='images/collection_banners/' + collection.image_file) }}">
+					{% else %}
+						<!-- Clock Icon -->
+						<svg xmlns="http://www.w3.org/2000/svg" width="256px" height="256px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+							<path fill="currentColor" d="M12 2A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2m4.2 14.2L11 13V7h1.5v5.2l4.5 2.7l-.8 1.3Z"/>
+						</svg>
 					{% endif %}
-				</span>
-			</div>
-			<div id="collection-creator-container">
-				<div id="collection-creator">
-					<a href="{{ url_for('users.user_page', username=collection.author.username) }}">
-						<img height="32px" width="32px" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + collection.author.image_file) }}">
-					</a>
-					<a href="{{ url_for('users.user_page', username=collection.author.username) }}">{{ collection.author.username }}</a>
+				</div>
+				<div class="collection-info">
+					<div class="collection-info-title">
+						<h2 style="display: block">{{ collection.name }}</h2>
+
+						{% if current_user.id == collection.author.id and not collection.type %}
+							<button id="collection-rename-button" onclick="show_collection_rename_form()" style="display: block;">
+								<!-- Pencil Icon -->
+								<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 36 36">
+									<path fill="currentColor" d="M33.87 8.32L28 2.42a2.07 2.07 0 0 0-2.92 0L4.27 23.2l-1.9 8.2a2.06 2.06 0 0 0 2 2.5a2.14 2.14 0 0 0 .43 0l8.29-1.9l20.78-20.76a2.07 2.07 0 0 0 0-2.92ZM12.09 30.2l-7.77 1.63l1.77-7.62L21.66 8.7l6 6ZM29 13.25l-6-6l3.48-3.46l5.9 6Z"/>
+									<path fill="none" d="M0 0h36v36H0z"/>
+								</svg>
+							</button>
+
+							<form id="collection-rename-form" method="POST" action="{{ url_for('collections.collection_edit', list=collection_id, action='rename') }}" style="display: none;">
+								{{ rename_collection_form.csrf_token }}
+								{{ rename_collection_form.name(id="collection-rename-input", placeholder="Name", value=collection.name) }}
+
+								<div id="collection-rename-buttons">
+									<button id="collection-rename-cancel-button" onclick="hide_collection_rename_form()" type="button">Cancel</button>
+									{{ rename_collection_form.submit(id="collection-rename-update-button", value="Update") }}
+								</div>
+							</form>
+						{% endif %}
+					</div>
+
+					<span class="text-muted">
+						{{ collection.posts|length }} Posts · 
+
+						{% with collection_date_updated_ago = collection.date_updated_ago() %}
+							{% if collection_date_updated_ago %}
+								 Last updated {{ collection_date_updated_ago }}
+							 {% else %}
+							 	Never Updated Before
+							{% endif %}
+						{% endwith %}
+					</span>
 				</div>
 
-				{% if current_user.id == collection.author.id %}
-					<div>
-						<button id="collection-options-button">
-							<img height="100%" width="100%" draggable="false" src="{{ url_for('static', filename='icons/kebab_menu.png') }}"/>
-						</button>
-
-						<div id="collection-options-menu" style="display: none;">
-							<form method="POST">
-								<button id="collection-delete-button" type="submit">
-									<i class="fa fa-trash" aria-hidden="true"></i>
-									<span>Delete Collection</span>
-								</button>
-							</form>
-						</div>
+				<div class="collection-creator-container">
+					<div class="collection-creator">
+						<a href="{{ url_for('users.user_page', username=collection.author.username) }}">
+							<img height="32px" width="32px" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + collection.author.image_file) }}">
+						</a>
+						<a href="{{ url_for('users.user_page', username=collection.author.username) }}">{{ collection.author.username }}</a>
 					</div>
+
+					{% if collection.author.id == current_user.id %}
+						{% if not collection.type %}
+							<div id="collection-options-container">
+								<button id="collection-options-button">
+									<!-- Kebab Icon -->
+									<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 16 16">
+										<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+											<circle cx="8" cy="2.5" r=".75"/>
+											<circle cx="8" cy="8" r=".75"/>
+											<circle cx="8" cy="13.5" r=".75"/>
+										</g>
+									</svg>
+								</button>
+
+								<div id="collection-options-menu" style="display: none;">
+									<form method="POST" action="{{ url_for('collections.collection_edit', list=collection_id, action='delete') }}">
+										<button class="collection-option-button" type="submit">
+											<!-- Trash Icon -->
+											<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+												<path fill="currentColor" d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12Z"/>
+											</svg>
+											Delete Collection
+										</button>
+									</form>
+								</div>
+							</div>
+						{% endif %}
+					{% else %}
+						<div id="collection-options-container">
+							<button id="collection-options-button">
+								<!-- Kebab Icon -->
+								<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 16 16">
+									<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+										<circle cx="8" cy="2.5" r=".75"/>
+										<circle cx="8" cy="8" r=".75"/>
+										<circle cx="8" cy="13.5" r=".75"/>
+									</g>
+								</svg>
+							</button>
+
+							<div id="collection-options-menu" style="display: none;">
+								<button class="collection-option-button">
+									<!-- Flag Icon -->
+									<svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+										<path fill="currentColor" d="M6 3a1 1 0 0 1 1 1v.88C8.06 4.44 9.5 4 11 4c3 0 3 2 5 2c3 0 4-2 4-2v8s-1 2-4 2s-3-2-5-2c-3 0-4 2-4 2v7H5V4a1 1 0 0 1 1-1Z"/>
+									</svg>
+									<span>Report Collection</span>
+								</button>
+							</div>
+						</div>
+					{% endif %}
+				</div>
+			</div>
+
+			<div id="collection-posts-container">
+				{% if collection.posts %}
+					{% for post in collection.posts %}
+						<article class="post-container" data-id="{{ post.id }}" data-collections="{{ post.collections_apart_of() }}">
+							<div class="post-header">
+								<div class="post-author">
+									<a href="{{ url_for('users.user_page', username=post.author.username) }}">
+										<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
+									</a>
+
+									<div class="post-header-info">
+										<a href="{{ url_for('users.user_page', username=post.author.username) }}">
+											{{ post.author.username }}
+										</a>
+										<span>{{ post.author.followers|length }} Followers</span>
+									</div>
+								</div>
+
+								<div class="post-options-container">
+									<button class="post-options-button" style="display: none">
+										<!-- Kebab Icon -->
+										<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 16 16">
+											<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+												<circle cx="8" cy="2.5" r=".75"/>
+												<circle cx="8" cy="8" r=".75"/>
+												<circle cx="8" cy="13.5" r=".75"/>
+											</g>
+										</svg>
+									</button>
+
+									<div class="post-options" style="display: none;">
+										{% if current_user.is_authenticated %}
+											{% if not collection.type %}
+												<button class="collection-post-save-read-later-button">
+													<!-- Clock Icon -->
+													<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+														<path fill="currentColor" d="M12 2A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2m4.2 14.2L11 13V7h1.5v5.2l4.5 2.7l-.8 1.3Z"/>
+													</svg>
+													Save To Read Later
+												</button>
+											{% endif %}
+
+											<button class="post-save-opener">
+												<!-- Collection Icon -->
+												<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+													<path fill="currentColor" d="M7 5h14v2H7V5m0 8v-2h14v2H7M4 4.5A1.5 1.5 0 0 1 5.5 6A1.5 1.5 0 0 1 4 7.5A1.5 1.5 0 0 1 2.5 6A1.5 1.5 0 0 1 4 4.5m0 6A1.5 1.5 0 0 1 5.5 12A1.5 1.5 0 0 1 4 13.5A1.5 1.5 0 0 1 2.5 12A1.5 1.5 0 0 1 4 10.5M7 19v-2h14v2H7m-3-2.5A1.5 1.5 0 0 1 5.5 18A1.5 1.5 0 0 1 4 19.5A1.5 1.5 0 0 1 2.5 18A1.5 1.5 0 0 1 4 16.5Z"/>
+												</svg>
+												Save To Collection
+											</button>
+										{% else %}
+											<button class="collection-post-save-read-later-button" onclick="redirect(`{{ url_for('collections.collection', list='RL') }}`)">
+												<!-- Clock Icon -->
+												<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+													<path fill="currentColor" d="M12 2A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2m4.2 14.2L11 13V7h1.5v5.2l4.5 2.7l-.8 1.3Z"/>
+												</svg>
+												Save To Read Later
+											</button>
+
+											<button class="collection-post-save-button" onclick="redirect(`{{ url_for('collections.collection', list='RL') }}`)">
+												<!-- Collection Icon -->
+												<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+													<path fill="currentColor" d="M7 5h14v2H7V5m0 8v-2h14v2H7M4 4.5A1.5 1.5 0 0 1 5.5 6A1.5 1.5 0 0 1 4 7.5A1.5 1.5 0 0 1 2.5 6A1.5 1.5 0 0 1 4 4.5m0 6A1.5 1.5 0 0 1 5.5 12A1.5 1.5 0 0 1 4 13.5A1.5 1.5 0 0 1 2.5 12A1.5 1.5 0 0 1 4 10.5M7 19v-2h14v2H7m-3-2.5A1.5 1.5 0 0 1 5.5 18A1.5 1.5 0 0 1 4 19.5A1.5 1.5 0 0 1 2.5 18A1.5 1.5 0 0 1 4 16.5Z"/>
+												</svg>
+												Save To Collection
+											</button>
+										{% endif %}
+
+										{% if current_user.id == collection.user_id %}
+											<button class="collection-post-remove-button">
+												<!-- Trash Icon -->
+												<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+													<path fill="currentColor" d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12Z"/>
+												</svg>
+												Remove Post
+											</button>
+										{% endif %}
+									</div>
+								</div>
+							</div>
+
+							<div class="post-title">
+								<a href="{{ url_for('posts.post', post_id=post.id, list=collection_id) }}">{{ post.title }}</a>
+								{{ post.views }} views · {{ post.date_posted_ago() }}
+							</div>
+
+							<p class="post-content">{{ limit_content[post.id] }}</p>
+						</article>
+					{% endfor %}
+				{% else %}
+					<p>No posts here yet</p>
 				{% endif %}
 			</div>
 		</div>
 
-		<div id="collection-posts-container">
-			{% if collection.posts %}
-				{% for post in collection.posts %}
-					<article class="post-container">
-						<div class="post-header">
-							<a href="{{ url_for('users.user_page', username=post.author.username) }}">
-								<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
-							</a>
-							<div class="post-header-info">
-								<a href="{{ url_for('users.user_page', username=post.author.username) }}">
-									{{ post.author.username }}
-								</a>
-								<span>{{ length(post.author.followers) }} Followers</span>
-							</div>
-						</div>
+		{% if current_user.id == collection.user_id and not collection.type %}
+			<div id="collection-change-image-modal" style="display: none;">
+				<div id="collection-change-image-preview">
+					<div id="collection-change-image-preview-image">
+						<h3>Preview</h3>
+						<img class="collection-image" width="320px" height="180px" src="{{ url_for('static', filename='images/collection_banners/' + collection.image_file) }}">
+					</div>
+					<div id="collection-change-image-preview-buttons">
+						<button id="collection-change-image-cancel-button" type="button" onclick="hide_collection_change_image_modal()">Cancel</button>
+						{{ update_collection_image_form.submit(id="collection-change-image-submit-button", value="Update", onclick="submit_collection_change_image_form()") }}
+					</div>
+				</div>
 
-						<div class="post-title">
-							<a href="{{ url_for('posts.post', post_id=post.id, list=collection_id) }}">{{ post.title }}</a>
-							{{ post.views }} views · {{ post.date_posted_ago() }}
-						</div>
+				<form id="collection-change-image-form" method="POST" enctype="multipart/form-data" action="{{ url_for('collections.collection_edit', list=collection_id, action='update_img') }}">
+					{{ update_collection_image_form.csrf_token }}
+					{{ update_collection_image_form.import_image_file(id="collection-change-image-form-input") }}
 
-						<p class="post-content">{{ limit_content[post.id] }}</p>
-					</article>
-				{% endfor %}
-			{% else %}
-				<p>No posts here yet</p>
-			{% endif %}
-		</div>
+					<button id="collection-change-image-form-button" type="button" onclick="show_collection_change_image_form_input()">
+						<!-- Upload Icon -->
+						<svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+							<path fill="currentColor" d="M11 16q0 .425.288.712q.287.288.712.288t.713-.275q.287-.275.287-.7V13h1.8q.35 0 .462-.312q.113-.313-.112-.538l-2.8-2.8Q12.2 9.2 12 9.2q-.2 0-.35.15l-2.8 2.8q-.225.225-.112.538Q8.85 13 9.2 13H11Zm-7 4q-.825 0-1.412-.587Q2 18.825 2 18V6q0-.825.588-1.412Q3.175 4 4 4h5.175q.4 0 .763.15q.362.15.637.425L12 6h8q.825 0 1.413.588Q22 7.175 22 8v10q0 .825-.587 1.413Q20.825 20 20 20Z"/>
+						</svg>
+						Upload Image
+					</button>
+				</form>
+			</div>
+		{% endif %}
+
+		{% if current_user.is_authenticated %}
+			{{ macros.post_save_modal(current_user=current_user) }}
+		{% endif %}
 	</div>
 {% endblock body %}

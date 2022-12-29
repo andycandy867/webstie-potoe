@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block body %}
+	<div id="main-body-nm">
+		<div id="user-page-header">
+			{{ macros.user_page_nav(user=user, current_user=current_user, update_banner_image_form=update_banner_image_form, current_location="Collections") }}
+
+			<div id="user-page-body">
+				{% if user_collections %}
+					<div id="collections-container" style="padding-bottom: 16px;">
+						{% for collection in user_collections %}
+							<div class="collection-info-card">
+								<img class="collection-image" width="320px" height="180px" src="{{ url_for('static', filename='images/collection_banners/' + collection.image_file) }}">
+								<div class="collection-info" style="border: none;">
+									<h2>
+										{% if collection.type %}
+											<a href="{{ url_for('collections.collection', list='RL') }}">
+												{{ collection.name }}
+											</a>
+										{% else %}
+											<a href="{{ url_for('collections.collection', list=collection.id) }}">
+												{{ collection.name }}
+											</a>
+										{% endif %}
+									</h2>
+
+									<span>
+										{{ collection.posts|length }} Posts · 
+
+										{% if collection.date_updated_ago() %}
+											 Last updated {{ collection.date_updated_ago() }}
+										 {% else %}
+										 	Never Updated Before
+										{% endif %}
+									</span>
+								</div>
+							</div>
+						{% endfor %}
+					</div>
+				{% else %}
+					<p>This User Hasn't Created Any Collections Yet</p>
+				{% endif %}
+				
+			</div>
+		</div>
+	</div>
+{% endblock body %}

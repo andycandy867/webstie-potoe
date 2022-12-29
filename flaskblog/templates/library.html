@@ -1,5 +1,4 @@
-{% extends 'base.html' %}
-
+{% extends "base.html" %}
 {% block body %}
 	<div id="main-body">
 		<div class="library-section">
@@ -8,31 +7,36 @@
 			</div>
 			<div class="library-body">
 				{% if created_collections %}
-					{% for collection in created_collections %}
-						<div id="collection-info-card">
-							<img width="100%" src="{{ url_for('static', filename='images/banners/' + collection.author.banner_image) }}">
-							<div id="collection-info">
-								<h2>{{ collection.name }}</h2>
-								<span>
-									{{ length(collection.posts) }} Posts · 
+					<div id="collections-container">
+						{% for collection in created_collections %}
+							<div class="collection-info-card">
+								<img class="collection-image" width="320px" height="180px" src="{{ url_for('static', filename='images/collection_banners/' + collection.image_file) }}">
+								<div class="collection-info" style="border: none;">
+									<h2>
+										{% if collection.type %}
+											<a href="{{ url_for('collections.collection', list='RL') }}">
+												{{ collection.name }}
+											</a>
+										{% else %}
+											<a href="{{ url_for('collections.collection', list=collection.id) }}">
+												{{ collection.name }}
+											</a>
+										{% endif %}
+									</h2>
 
-									{% if collection.date_updated_ago() %}
-										 Last updated {{ collection.date_updated_ago() }}
-									 {% else %}
-									 	Never Updated Before
-									{% endif %}
-								</span>
-							</div>
-							<div id="collection-creator-container">
-								<div id="collection-creator">
-									<a href="{{ url_for('users.user_page', username=collection.author.username) }}">
-										<img height="32px" width="32px" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + collection.author.image_file) }}">
-									</a>
-									<a href="{{ url_for('users.user_page', username=collection.author.username) }}">{{ collection.author.username }}</a>
+									<span>
+										{{ collection.posts|length }} Posts · 
+
+										{% if collection.date_updated_ago() %}
+											 Last updated {{ collection.date_updated_ago() }}
+										 {% else %}
+										 	Never Updated Before
+										{% endif %}
+									</span>
 								</div>
 							</div>
-						</div>
-					{% endfor %}
+						{% endfor %}
+					</div>
 				{% else %}
 					<p class="library-filler">Once you create some collections they will show up here</p>
 				{% endif %}
@@ -46,26 +50,7 @@
 			<div class="library-body">
 				{% if historical_posts %}
 					{% for post in historical_posts %}
-						<article class="post-container">
-							<div class="post-header">
-								<a href="{{ url_for('users.user_page', username=post.author.username) }}">
-									<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
-								</a>
-								<div class="post-header-info">
-									<a href="{{ url_for('users.user_page', username=post.author.username) }}">
-										{{ post.author.username }}
-									</a>
-									<span>{{ length(post.author.followers) }} Followers</span>
-								</div>
-							</div>
-
-							<div class="post-title">
-								<a href="{{ url_for('posts.post', post_id=post.id) }}">{{ post.title }}</a>
-								{{ post.views }} views · {{ post.date_posted_ago() }}
-							</div>
-
-							<p class="post-content">{{ historical_posts_limit_content[post.id] }}</p>
-						</article>
+						{{ macros.minimized_post(current_user, post, historical_posts_limit_content) }}
 					{% endfor %}
 
 					{% if historical_posts_count > 0 %}
@@ -86,26 +71,7 @@
 			<div class="library-body">
 				{% if liked_posts %}
 					{% for post in liked_posts %}
-						<article class="post-container">
-							<div class="post-header">
-								<a href="{{ url_for('users.user_page', username=post.author.username) }}">
-									<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
-								</a>
-								<div class="post-header-info">
-									<a href="{{ url_for('users.user_page', username=post.author.username) }}">
-										{{ post.author.username }}
-									</a>
-									<span>{{ length(post.author.followers) }} Followers</span>
-								</div>
-							</div>
-
-							<div class="post-title">
-								<a href="{{ url_for('posts.post', post_id=post.id) }}">{{ post.title }}</a>
-								{{ post.views }} views · {{ post.date_posted_ago() }}
-							</div>
-
-							<p class="post-content">{{ liked_posts_limit_content[post.id] }}</p>
-						</article>
+						{{ macros.minimized_post(current_user, post, liked_posts_limit_content) }}
 					{% endfor %}
 
 					{% if liked_posts_count > 0 %}
@@ -126,26 +92,7 @@
 			<div class="library-body">
 				{% if created_posts %}
 					{% for post in created_posts %}
-						<article class="post-container">
-							<div class="post-header">
-								<a href="{{ url_for('users.user_page', username=post.author.username) }}">
-									<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
-								</a>
-								<div class="post-header-info">
-									<a href="{{ url_for('users.user_page', username=post.author.username) }}">
-										{{ post.author.username }}
-									</a>
-									<span>{{ length(post.author.followers) }} Followers</span>
-								</div>
-							</div>
-
-							<div class="post-title">
-								<a href="{{ url_for('posts.post', post_id=post.id) }}">{{ post.title }}</a>
-								{{ post.views }} views · {{ post.date_posted_ago() }}
-							</div>
-
-							<p class="post-content">{{ created_posts_limit_content[post.id] }}</p>
-						</article>
+						{{ macros.minimized_post(current_user, post, created_posts_limit_content) }}
 					{% endfor %}
 
 					{% if created_posts_count > 0 %}
@@ -158,5 +105,9 @@
 				{% endif %}
 			</div>
 		</div>
+
+		{% if current_user.is_authenticated %}
+			{{ macros.post_save_modal(current_user=current_user) }}
+		{% endif %}
 	</div>
 {% endblock %}

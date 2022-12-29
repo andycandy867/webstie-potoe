@@ -1,9 +1,11 @@
 import re
 from flask import render_template, url_for, flash, redirect, request, Blueprint, make_response, jsonify
-from flask_login import login_user, current_user, logout_user
+from flask_login import current_user, login_user, logout_user, login_required
 from flaskblog import db, bcrypt
 from flaskblog.models import User, Post, Collection
-from flaskblog.users.forms import RegistrationForm, SignInForm, RequestResetForm, UpdateDescriptionForm
+from flaskblog.users.forms import RegistrationForm, SignInForm, RequestResetForm, UpdateBannerImageForm,\
+	UpdateDescriptionForm
+from flaskblog.users.utils import allowed_file, save_file, delete_previous_file
 
 users = Blueprint('users', __name__)
 
@@ -27,9 +29,6 @@ def register():
 
 		read_later = Collection(user_id=current_user.id, name="Read Later", type='RL')
 		db.session.add(read_later)
-
-		archived = Collection(user_id=current_user.id, name='Archived', type='archived')
-		db.session.add(archived)
 
 		db.session.commit()
 		return redirect(url_for('main.home'))
@@ -64,6 +63,7 @@ def logout():
 @users.route('/user/<string:username>')
 def user_page(username):
 	user = User.query.filter_by(username=username).first_or_404()
+	update_banner_image_form = UpdateBannerImageForm()
 	most_viewed_user_posts = Post.query.filter_by(user_id=user.id).order_by(Post.views.desc()).limit(5).all()
 	most_recent_user_posts = Post.query.filter_by(user_id=user.id).order_by(Post.date_posted.desc()).limit(5).all()
 	featured_post = Post.query.get(user.featured_post_id)
@@ -88,21 +88,16 @@ def user_page(username):
 		else:
 			limit_content[post.id] = splinted[0] + '...'
 
-	user_followed = False
-	if current_user.is_authenticated:
-		if user in current_user.following:
-			user_followed = True
-
-	return render_template('user_page.html', title=username, user=user, user_followed=user_followed,
-						   featured_post=featured_post, most_viewed_user_posts=most_viewed_user_posts,
-						   most_recent_user_posts=most_recent_user_posts, limit_content=limit_content)
+	return render_template('/user_pages/user_page.html', title=username, user=user, featured_post=featured_post,
+						   most_viewed_user_posts=most_viewed_user_posts, most_recent_user_posts=most_recent_user_posts,
+						   limit_content=limit_content, update_banner_image_form=update_banner_image_form)
 
 
 @users.route('/user/<string:username>/posts')
 def user_posts(username):
 	user = User.query.filter_by(username=username).first_or_404()
+	update_banner_image_form = UpdateBannerImageForm()
 	all_user_posts = Post.query.filter_by(user_id=user.id).order_by(Post.date_posted.desc()).all()
-	posts_count = len(all_user_posts)
 
 	limit_content = {}
 	for post in all_user_posts:
@@ -119,41 +114,30 @@ def user_posts(username):
 		else:
 			limit_content[post.id] = splinted[0] + '...'
 
-	user_followed = False
-	if current_user.is_authenticated:
-		if user in current_user.following:
-			user_followed = True
-
-	return render_template('user_posts.html', title=username, user=user, user_followed=user_followed,
-						   posts_count=posts_count, all_user_posts=all_user_posts, limit_content=limit_content)
+	return render_template('/user_pages/user_posts.html', title=username, user=user,
+						   update_banner_image_form=update_banner_image_form, all_user_posts=all_user_posts,
+						   limit_content=limit_content)
 
 
 @users.route('/user/<string:username>/collections')
 def user_collections(username):
 	user = User.query.filter_by(username=username).first_or_404()
-
-	user_followed = False
-	if current_user.is_authenticated:
-		if user in current_user.following:
-			user_followed = True
-
+	update_banner_image_form = UpdateBannerImageForm()
 	user_collections = Collection.query.filter_by(user_id=user.id, type=None).all()
 
-	return render_template('user_collections.html', title=username, user=user, user_followed=user_followed,
-	user_collections=user_collections)
+	return render_template('/user_pages/user_collections.html', title=username, user=user,
+						   update_banner_image_form=update_banner_image_form, user_collections=user_collections)
 
 
 @users.route('/user/<string:username>/about', methods=["GET", "POST"])
 def user_about(username):
-	form = None
 	user = User.query.filter_by(username=username).first_or_404()
+	update_banner_image_form = UpdateBannerImageForm()
 
 	if request.method == "GET":
-		user_followed = False
+		form = None
 		if current_user.is_authenticated:
 			form = UpdateDescriptionForm()
-			if user in current_user.following:
-				user_followed = True
 
 		user_date_joined = user.date_joined.strftime("%b %d %Y")
 
@@ -161,8 +145,9 @@ def user_about(username):
 		for post in user.posts:
 			user_total_views += post.views
 
-		return render_template('user_about.html', title=username, user=user, user_followed=user_followed,
-							   user_date_joined=user_date_joined, user_total_views=user_total_views, form=form)
+		return render_template('/user_pages/user_about.html', title=username, user=user,
+							   update_banner_image_form=update_banner_image_form, user_date_joined=user_date_joined,
+							   user_total_views=user_total_views, form=form)
 	elif request.method == "POST":
 		form = UpdateDescriptionForm()
 
@@ -174,7 +159,45 @@ def user_about(username):
 		return redirect(url_for("users.user_about", username=user.username))
 
 
-@users.route('/user/follow', methods=["POST"])
+@users.route("/user/<string:username>/edit", methods=["POST"])
+@login_required
+def user_edit(username):
+	user = User.query.filter_by(username=username).first_or_404()
+	action = request.args.get("action", str)
+
+	if current_user == user:
+		if action == "change_banner_img":
+			update_banner_image_form = UpdateBannerImageForm()
+
+			if update_banner_image_form.validate_on_submit():
+				if update_banner_image_form.image_file.data:
+
+					if 'image_file' not in request.files:
+						flash('No file part')
+
+					blob = request.files['image_file'].read()
+					size = len(blob)
+					if size > 1024 * 1024 * 5:
+						flash('Uploads must be under 5 Megabytes', 'danger')
+						return redirect(url_for('users.user_page', username=user.username))
+
+					file = update_banner_image_form.image_file.data
+
+					if file.filename == '':
+						flash('No selected file')
+					if file and allowed_file(file.filename):
+						if user.banner_image != "default_banner.jpg":
+							delete_previous_file(user.banner_image)
+						uploaded_file_path = save_file(file, user.id)
+
+						user.banner_image = uploaded_file_path
+						db.session.commit()
+
+		return redirect(url_for('users.user_page', username=user.username))
+
+
+@users.route('/user/<string:username>/follow', methods=["POST"])
+@login_required
 def follow():
 	post_id = request.json.get('post_id')
 	user_id = request.json.get('user_id')
@@ -201,6 +224,7 @@ def follow():
 
 
 @users.route('/reset_password_request', methods=["GET", "POST"])
+@login_required
 def reset_password_request():
 	if current_user.is_authenticated:
 		return redirect(url_for('main.home'))

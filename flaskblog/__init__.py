@@ -4,7 +4,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, current_user
 from flaskblog.config import Config
-from urllib.parse import unquote as urllib_unquote
 
 db = SQLAlchemy()
 bcrypt = Bcrypt()
@@ -21,14 +20,14 @@ def create_app(config_class=Config):
 	bcrypt.init_app(app)
 	login_manager.init_app(app)
 
-	@app.template_filter('unquote')
-	def unquote(url):
-		safe = app.jinja_env.filters['safe']
-		return safe(urllib_unquote(url))
-
 	@app.template_global()
-	def length(v):
-		return len(v)
+	def is_following(user):
+		user_followed = False
+		if current_user.is_authenticated:
+			if user in current_user.following:
+				user_followed = True
+
+		return user_followed
 
 	@app.template_global()
 	def comment_like_check(comment):

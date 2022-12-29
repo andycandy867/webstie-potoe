@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block body %}
+	<div id="main-body-nm">
+		<div id="user-page-header">
+			{{ macros.user_page_nav(user=user, current_user=current_user, update_banner_image_form=update_banner_image_form, current_location="Posts") }}
+
+			<div id="user-page-body">
+				{% if all_user_posts %}
+					<div id="user-posts-header">
+						<h3>{{ all_user_posts|length }} Posts</h3>
+					</div>
+
+					{% for post in all_user_posts %}
+						{{ macros.minimized_post(current_user, post, limit_content) }}
+					{% endfor %}
+				{% else %}
+					<p>This User Hasn't Posted Anything Yet</p>
+				{% endif %}
+			</div>
+		</div>
+
+		{% if current_user.is_authenticated %}
+			{{ macros.post_save_modal(current_user=current_user) }}
+		{% endif %}
+	</div>
+{% endblock body %}

@@ -2,7 +2,7 @@ from flask import render_template, url_for, flash, redirect, request, Blueprint
 from flask_login import current_user, login_required
 from flaskblog import db, bcrypt
 from flaskblog.settings.forms import UpdateAccountForm, ResetPasswordForm
-from flaskblog.settings.utils import save_picture
+from flaskblog.settings.utils import allowed_file, save_file, delete_previous_file
 
 
 settings = Blueprint('settings', __name__)
@@ -22,8 +22,26 @@ def account():
 	elif request.method == 'POST':
 		if form.validate_on_submit():
 			if form.picture.data:
-				picture_file = save_picture(form.picture.data)
-				current_user.image_file = picture_file
+				if 'picture' not in request.files:
+					flash('No file part')
+
+				blob = request.files['picture'].read()
+				size = len(blob)
+				if size > 1024 * 1024 * 5:
+					flash('Uploads must be under 5 Megabytes', 'danger')
+					return redirect(url_for('settings.account'))
+
+				file = form.picture.data
+
+				if file.filename == '':
+					flash('No selected file')
+				if file and allowed_file(file.filename):
+					if current_user.image_file != "default.png":
+						delete_previous_file(current_user.image_file)
+
+					uploaded_file_path = save_file(file, current_user.id)
+					current_user.image_file = uploaded_file_path
+					db.session.commit()
 
 			current_user.username = form.username.data
 			current_user.email = form.email.data

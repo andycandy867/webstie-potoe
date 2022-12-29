@@ -1,136 +1,171 @@
-{% extends 'base.html' %}
-
+{% extends "base.html" %}
 {% block body %}
 	<div id="main-body">
-		<div id="post-container">
-			<form id="create-post-form" name="create-post-form" method="POST" enctype="multipart/form-data" action="{{ url_for('posts.update_post', post_id=post_id) }}">
-				{{ post_form.hidden_tag() }}
+		<div id="create-post-nav">
+			<button id="create-post-insert-button" type="button">Insert Media</button>
+		</div>
 
-				<div id="create-post-header">
-					<legend style="font-size: 32px;">Update Post</legend>
+		<h1 style="margin-top: 56px;">Update Post</h1>
 
-					<div id="create-post-insert-container">
-						<button id="create-post-insert-button" type="button">
-							Insert Media
-						</button>
+		<form id="create-post-form" method="POST" enctype="multipart/form-data" action="{{ url_for('posts.update_post', post_id=post_id, post_cache_id=post_cache_id) }}">
+			{{ post_form.hidden_tag() }}
+			{{ post_form.import_file(id="import-file", accept="image/*, video/*") }}
 
-						<div id="create-post-insert-menu" style="display: none;">
-							<div id="create-post-insert-import">
-								{% if post_form.import_file.errors %}
-									<div class="create-post-insert-import-error">
-										{% for error in post_form.import_file.errors %}
-											{{ error }}
-										{% endfor %}
-									</div>
-								{% endif %}
+			<datalist id="my-detents">
+				<option value="1">
+				<option value="25">
+				<option value="50">
+				<option value="75">
+			</datalist>
 
-								{{ post_form.import_file(id="import-file", accept="image/*, video/*") }}
-							</div>
+			<div id="new-post-title">
+				<label id="new-post-title-label">Title</label>
 
-							{% for media in uploaded_media %}
-								<div class="input-element uploaded-media-container" style="display: flex;">
-									<div class="uploaded-media-options" style="display: none;">
-										<img class="options-opener uploaded-media-options-opener" height="32" width="32" draggable="false" src="{{ url_for('static', filename='icons/kebab_menu.png') }}"/>
+				{% if post_form.title.errors %}
+					<div class="new-post-form-error">
+						{% for error in post_form.title.errors %}
+							{{ error }}
+						{% endfor %}
+					</div>
+				{% endif %}
 
-										<button id="uploaded-media-remove-{{ media.id }}" class="uploaded-media-remove" type="button" style="display: none;">
-											Delete
+				{{ post_form.title(id="new-post-title-input") }}
+			</div>
+
+			<div id="new-post-content">
+				<label id="new-post-content-label">Content</label>
+
+				{% if splinted %}
+					{% for text in splinted %}
+						{% if is_media(text) == 'Yes' %}
+							<div class="inserted-media-container">
+								<div class="inserted-media-options-container">
+									<button class="inserted-media-options-opener" type="button" style="display: none;">
+										<!-- Kebab Icon -->
+										<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 16 16">
+											<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+												<circle cx="8" cy="2.5" r=".75"/>
+												<circle cx="8" cy="8" r=".75"/>
+												<circle cx="8" cy="13.5" r=".75"/>
+											</g>
+										</svg>
+									</button>
+
+									<div class="inserted-media-options" style="display: none;">
+										<div class="inserted-media-size-container">
+											<label>Size</label>
+											<div>
+												<input class="inserted-media-size-input" type="range" name="size-{{ loop.index }}" list="my-detents" value="{{ get_media_size(text) }}">
+												<output class="inserted-media-size">{{ get_media_size(text) }}%</output>
+											</div>
+										</div>
+
+										<button class="inserted-media-remove" type="button">
+											<!-- Trash Icon -->
+											<svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+												<path fill="currentColor" d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12Z"/>
+											</svg>
+											<span>Remove Media</span>
 										</button>
 									</div>
-
-									<img class="uploaded-media" src="{{ url_for('static', filename=media.file) }}">
 								</div>
-							{% endfor %}
+
+								<img class="inserted-media" style="width: {{ get_media_size(text) }}%;" src="{{ url_for('static', filename=rm_suffix(text)) }}">
+								<input type="hidden" name="{{ loop.index }}" value="{{ rm_suffix(text) }}">
+							</div>
+
+							{% if splinted|length == loop.index %}
+								{{ post_form.add_empty(id='add-textarea', value='Add Textarea') }}
+							{% endif %}
+						{% else %}
+							<div class="textarea-container">
+								<div class="textarea-options-container">
+									<button class="textarea-options-opener" type="button" style="display: none;">
+										<!-- Kebab Icon -->
+										<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 16 16">
+											<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+												<circle cx="8" cy="2.5" r=".75"/>
+												<circle cx="8" cy="8" r=".75"/>
+												<circle cx="8" cy="13.5" r=".75"/>
+											</g>
+										</svg>
+									</button>
+
+									<div class="textarea-options" style="display: none;">
+										<button class="textarea-remove" type="button">
+											<!-- Trash Icon -->
+											<svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+												<path fill="currentColor" d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12Z"/>
+											</svg>
+											<span>Remove Textarea</span>
+										</button>
+									</div>
+								</div>
+
+								{% if is_media(text) == 'Empty' %}
+									<textarea class="create-post-textarea" name="{{ loop.index }}"></textarea>
+								{% else %}
+									<textarea class="create-post-textarea" name="{{ loop.index }}">{{ text }}</textarea>
+								{% endif %}
+							</div>
+						{% endif %}
+					{% endfor %}
+				{% else %}
+					{{ post_form.add_empty(id='add-textarea', value='+ Add Textarea') }}
+				{% endif %}
+			</div>
+
+			{{ post_form.submit(id="update-post-submit-button") }}
+			<button type="button" id="update-post-cancel-button" onclick="redirect(`{{ url_for('posts.post', post_id=post_id) }}`)">Cancel</button>
+		</form>
+
+		<div id="create-post-insert-menu" style="display: none;">
+			<div id="create-post-insert-import">
+				{% if post_form.import_file.errors %}
+					<div class="create-post-insert-import-error">
+						{% for error in post_form.import_file.errors %}
+							<span>{{ error }}</span>
+						{% endfor %}
+					</div>
+				{% endif %}
+
+				<button id="import-file-button">
+					<!-- Upload Icon -->
+					<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+						<path fill="currentColor" d="M11 16q0 .425.288.712q.287.288.712.288t.713-.275q.287-.275.287-.7V13h1.8q.35 0 .462-.312q.113-.313-.112-.538l-2.8-2.8Q12.2 9.2 12 9.2q-.2 0-.35.15l-2.8 2.8q-.225.225-.112.538Q8.85 13 9.2 13H11Zm-7 4q-.825 0-1.412-.587Q2 18.825 2 18V6q0-.825.588-1.412Q3.175 4 4 4h5.175q.4 0 .763.15q.362.15.637.425L12 6h8q.825 0 1.413.588Q22 7.175 22 8v10q0 .825-.587 1.413Q20.825 20 20 20Z"/>
+					</svg>
+					Upload Media
+				</button>
+			</div>
+
+			{% for media in uploaded_media %}
+				<div class="uploaded-media-container">
+					<div class="uploaded-media-options-container">
+						<button class="uploaded-media-options-opener" style="display: none;">
+							<!-- Kebab Icon -->
+							<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 16 16">
+								<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+									<circle cx="8" cy="2.5" r=".75"/>
+									<circle cx="8" cy="8" r=".75"/>
+									<circle cx="8" cy="13.5" r=".75"/>
+								</g>
+							</svg>
+						</button>
+
+						<div class="uploaded-media-options" style="display: none;">
+							<button class="uploaded-media-remove">
+								<!-- Trash Icon -->
+								<svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+									<path fill="currentColor" d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12Z"/>
+								</svg>
+								<span>Delete</span>
+							</button>
 						</div>
 					</div>
+
+					<img class="uploaded-media" data-id="{{ media.id }}" src="{{ url_for('static', filename=media.file) }}">
 				</div>
-
-				<div id="new-post-title">
-					<label id="new-post-title-label">Title</label>
-					<!-- Outputs Errors-->
-					{% if post_form.title.errors %}
-						<div class="new-post-form-error">
-							{% for error in post_form.title.errors %}
-								{{ error }}
-							{% endfor %}
-						</div>
-					{% endif %}
-
-					{{ post_form.title(id="new-post-title-input") }}
-				</div>
-
-				<div id="new-post-content">
-					<label id="new-post-content-label">Content</label>
-
-					<datalist id="my-detents">
-						<option value="1">
-						<option value="25">
-						<option value="50">
-						<option value="75">
-					</datalist>
-
-					{% if splinted %}
-						{% with item = namespace(value=0) %}
-							{% for text in splinted %}
-								{% if is_media(text) == 'Yes' %}
-									<div class="input-element inserted-media-container" id="inserted-media-{{ item.value }}">
-										<div class="inserted-media-dropdown-container" style="display: none;">
-											<img class="options-opener inserted-media-dropdown-opener" height="32" width="32" draggable="false" src="{{ url_for('static', filename='icons/kebab_menu.png') }}"/>
-
-											<div class="inserted-media-dropdown" style="display: none;">
-												<div class="inserted-media-size">
-													<label>Size</label>
-													<input id="size-{{ item.value }}" class="inserted-media-range-input" type="range" name="size-{{ item.value }}" list="my-detents" value="{{ get_media_size(text) }}">
-													<output>{{ get_media_size(text) }}%</output>
-												</div>
-												<!-- handle with js -->
-												<button type="button" class="inserted-media-remove" id="inserted-media-remove-{{ item.value }}">
-													Remove Media
-												</button>
-											</div>
-										</div>
-
-										<img class="inserted-media" style="width: {{ get_media_size(text) }}%;" src="{{ url_for('static', filename=rm_suffix(text)) }}">
-										<input type="hidden" name="{{ item.value }}" value="{{ rm_suffix(text) }}">
-									</div>
-
-									{% if length(splinted) == item.value + 1 %}
-										{{ post_form.add_empty(id='add-textarea', value='[+] Add Textarea') }}
-									{% endif %}
-								{% else %}
-									<div class="input-element textarea-container" id="textarea-{{ item.value }}">
-										<div class="textarea-dropdown-container" style="display: none;">
-											<img class="options-opener textarea-dropdown-opener" height="32" width="32" draggable="false" src="{{ url_for('static', filename='icons/kebab_menu.png') }}"/>
-
-											<div class="textarea-dropdown" style="display: none;">
-												<!-- bold, italic, h-link, ect -->
-
-												<button type="button" class="textarea-remove" id="textarea-remove-{{ item.value }}">
-													Remove Textarea
-												</button>
-											</div>
-										</div>
-
-										{% if is_media(text) == 'Empty' %}
-											<textarea name="{{ item.value }}" class="create-post-textarea" name="textarea-{{ item.value }}"></textarea>
-										{% else %}
-											<textarea name="{{ item.value }}" class="create-post-textarea" name="textarea-{{ item.value }}">{{ text }}</textarea>
-										{% endif %}
-									</div>
-								{% endif %}
-
-								{% set item.value = item.value + 1 %}
-							{% endfor %}
-						{% endwith %}
-					{% else %}
-						{{ post_form.add_empty(id='add-textarea', value='[+] Add Textarea') }}
-					{% endif %}
-				</div>
-				<div>
-					<button type="button" id="update-post-cancel-button" onclick="redirect(`{{ url_for('posts.post', post_id=post_id)|unquote }}`)">Cancel</button>
-					
-					{{ post_form.submit(id="update-post-submit-button") }}
-				</div>
-			</form>
+			{% endfor %}
 		</div>
 	</div>
 {% endblock %}

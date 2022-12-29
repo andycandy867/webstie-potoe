@@ -1,10 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block body %}
+	<div id="main-body">
+		Under Construction
 
-</body>
-</html>
+		{% if current_user.is_authenticated %}
+			{{ macros.post_save_modal(current_user=current_user) }}
+		{% endif %}
+	</div>
+{% endblock %}

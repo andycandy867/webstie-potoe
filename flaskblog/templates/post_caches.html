@@ -1,48 +1,56 @@
-{% extends 'base.html' %}
-
+{% extends "base.html" %}
 {% block body %}
 	<div id="main-body">
 		<div id="post-cache-toolbar">
-			<a href="{{ url_for('posts.new_post') }}">
-				<button>+ New Post</button>
-			</a>
+			<a href="{{ url_for('posts.new_post') }}">New Post</a>
 		</div>
 
-		<form method="POST">
-			<input type="hidden" name="post_cache_id">
-		</form>
-
 		<div id="post-cache-container">
-			{% for post_cache in post_caches %}
-				<div class="post-cache" id="post-cache-{{ post_cache.id }}" onclick="redirect(`{{ url_for('posts.new_post', post_cache_id=post_cache.id)|unquote }}`)">
+			{% for post_cache in user_post_caches %}
+				<div class="post-cache" data-id="{{ post_cache.id }}" onclick="redirect(`{{ url_for('posts.new_post', post_cache_id=post_cache.id) }}`)">
 					<div class="post-cache-header">
-						<div class="post-cache-title">
+						<span class="post-cache-title">
 							{% if post_cache.title %}
 								{{ post_cache.title }}
 							{% else %}
 								Untitled Post
 							{% endif %}
-						</div>
+						</span>
 
 						<div class="post-cache-dropdown-container">
-							<img class="post-cache-dropdown-container-opener options-opener" style="display: none" height="32" width="32" draggable="false" src="{{ url_for('static', filename='icons/kebab_menu.png') }}"/>
+							<button class="post-cache-dropdown-opener" style="display: none;">
+								<!-- Kebab Icon -->
+								<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 16 16">
+									<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+										<circle cx="8" cy="2.5" r=".75"/>
+										<circle cx="8" cy="8" r=".75"/>
+										<circle cx="8" cy="13.5" r=".75"/>
+									</g>
+								</svg>
+							</button>
 
-							<div class="post-cache-dropdown-options" style="display: none;">
-								<button type="button" class="post-cache-delete">Delete Post Cache</button>
+							<div class="post-cache-dropdown" style="display: none;">
+								<button class="post-cache-delete">
+									<!-- Trash Icon -->
+									<svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+										<path fill="currentColor" d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12Z"/>
+									</svg>
+									Delete Post Cache
+								</button>
 							</div>
 						</div>
 					</div>
 
-					<div class="post-cache-content">
+					<p class="post-cache-content">
 						{% if limit_content[post_cache.id] %}
 							{{ limit_content[post_cache.id] }}
 						{% else %}
 							Unable To Preview Post
 						{% endif %}
-					</div>
-					
-					<div class="post-cache-date">
-						{{ post_cache.date_cached.strftime('%x') }}			
+					</p>
+
+					<div class="post-cache-date text-muted">
+						{{ post_cache.date_cached.strftime("%x") }}			
 					</div>
 				</div>
 			{% endfor %}

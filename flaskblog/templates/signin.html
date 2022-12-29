@@ -1,9 +1,9 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block body %}
 	<div id="main-body">
 		<div id="sign-in-container">
 			<form id="sign-in-form" method="POST" action="">
-				{{ form.hidden_tag() }}
+				{{ form.csrf_token }}
 				<div>
 					<div id="sign-in-form-header">
 						<h1>Sign In</h1>
@@ -54,7 +54,7 @@
 								<a href="{{ url_for('users.reset_password_request') }}">Forgot Password?</a>
 							</div>
 
-							{{ form.submit(class="sign-in-form-submit", value="Sign In", style="cursor: pointer;") }}
+							{{ form.submit(id="sign-in-form-submit", value="Sign In") }}
 						</div>
 					</div>
 				</div>

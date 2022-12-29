@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block body %}
 	<div id="main-body">
 		<div id="sign-up-container">
@@ -70,7 +70,7 @@
 						</div>
 
 						<div id="sign-up-form-body-2">
-							{{ form.submit(class="sign-up-form-submit", value="Sign Up", style="cursor: pointer;") }}
+							{{ form.submit(id="sign-up-form-submit", value="Sign Up") }}
 						</div>
 					</div>
 				</div>

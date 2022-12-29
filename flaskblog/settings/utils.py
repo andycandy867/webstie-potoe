@@ -1,25 +1,35 @@
 import os
 from PIL import Image
 from flask import current_app
-from flask_login import current_user
+from werkzeug.utils import secure_filename
+
+image_file_ext = ['png', 'jpg', 'jpeg', 'gif']
 
 
-def save_picture(form_picture):
-    if current_user.image_file != 'default.jpg':
-        # Save Picture in other div?
-        for root, dirs, files in os.walk(os.path.join(current_app.root_path, 'static/images/profile_pics')):
-            if current_user.id in files:
-                file_ext = os.path.join(root, current_user.id)
-                os.remove(f'{os.path.join(current_app.root_path, "static/images/profile_pics", current_user.id)}.{file_ext}')
-                break
+def allowed_image_file(filename):
+	secure_filename(filename)
+	return filename.split('.')[1] in image_file_ext
 
-    _, f_ext = os.path.splitext(form_picture.filename)
-    picture_filename = f'{current_user.id}{f_ext}'
-    picture_path = os.path.join(current_app.root_path, 'static/images/profile_pics', picture_filename)
 
-    output_size = (128, 128)
-    i = Image.open(form_picture)
-    i.thumbnail(output_size)
-    i.save(picture_path)
+def allowed_file(filename):
+	secure_filename(filename)
+	return '.' in filename and filename.rsplit('.', 1)[1].lower() in image_file_ext
 
-    return picture_filename
+
+def save_file(file, current_user_id):
+	_, f_ext = os.path.splitext(secure_filename(file.filename))
+	file_filename = f'{current_user_id}{f_ext}'
+
+	if allowed_image_file(f_ext):
+		path = os.path.join(current_app.root_path, 'static/images/profile_pics', file_filename)
+		file.seek(0)
+		output_size = (128, 128)
+		img = Image.open(file)
+		img.thumbnail(output_size)
+		img.save(path)
+		return file_filename
+
+
+def delete_previous_file(file_name):
+	file = os.path.join(current_app.root_path, 'static/images/profile_pics', file_name)
+	os.remove(file)

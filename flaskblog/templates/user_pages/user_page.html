@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block body %}
+	<div id="main-body-nm">
+		<div id="user-page-header">
+			{{ macros.user_page_nav(user=user, current_user=current_user, update_banner_image_form=update_banner_image_form, current_location="Home") }}
+
+			<div id="user-page-body">
+				{% if featured_post %}
+					<div id="featured-post-container">
+						{{ macros.minimized_post(current_user, featured_post, limit_content) }}
+					</div>
+				{% endif %}
+
+				<div style="margin-bottom: 16px; border-bottom: 1px groove #aaa;">
+					<h1 style="margin-bottom: 8px;">Popular Posts</h1>
+					{% for post in most_viewed_user_posts %}
+						{{ macros.minimized_post(current_user, post, limit_content) }}
+					{% endfor %}
+				</div>
+
+				<div>
+					<h1 style="margin-bottom: 8px;">Recent Posts</h1>
+					{% for post in most_recent_user_posts %}
+						{{ macros.minimized_post(current_user, post, limit_content) }}
+					{% endfor %}
+				</div>
+			</div>
+		</div>
+
+		{% if current_user.is_authenticated %}
+			{{ macros.post_save_modal(current_user=current_user) }}
+		{% endif %}
+	</div>
+{% endblock %}

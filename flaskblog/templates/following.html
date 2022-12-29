@@ -1,5 +1,4 @@
-{% extends 'base.html' %}
-
+{% extends "base.html" %}
 {% block body %}
 	<div id="main-body">
 		<div class="following-section">
@@ -15,7 +14,7 @@
 								<div class="followed-user-info-container">
 									<h3>{{ user.username }}</h3>
 									<div class="followed-user-followers-posts">
-										{{ length(user.followers) }} Followers • {{ followed_users_posts_count[user.id] }} Posts
+										{{ user.followers|length }} Followers • {{ followed_users_posts_count[user.id] }} Posts
 									</div>
 									{% if user.description %}
 										<p class="followed-user-description">{{ user.description }}</p>
@@ -25,9 +24,9 @@
 						</a>
 					{% endfor %}
 
-					{% if length(current_user.following) > 3 %}
+					{% if current_user.following|length > 3 %}
 						<button class="following-view-button">
-							Show {{ length(current_user.following) }} More Users
+							Show {{ current_user.following|length }} More Users
 						</button>
 					{% endif %}
 				{% else %}
@@ -43,31 +42,12 @@
 			<div class="following-body">
 				{% if followed_users_posts %}
 					{% for post in followed_users_posts %}
-						<article class="post-container">
-							<div class="post-header">
-								<a href="{{ url_for('users.user_page', username=post.author.username) }}">
-									<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
-								</a>
-								<div class="post-header-info">
-								<a href="{{ url_for('users.user_page', username=post.author.username) }}">
-										{{ post.author.username }}
-									</a>
-									<span>{{ length(post.author.followers) }} Followers</span>
-								</div>
-							</div>
-
-							<div class="post-title">
-								<a href="{{ url_for('posts.post', post_id=post.id) }}">{{ post.title }}</a>
-								{{ post.views }} views · {{ post.date_posted_ago() }}
-							</div>
-
-							<p class="post-content">{{ limit_content[post.id] }}</p>
-						</article>
+						{{ macros.minimized_post(current_user, post, limit_content) }}
 					{% endfor %}
 
-					{% if length(followed_users_posts) > 0 %}
+					{% if followed_users_posts|length > 0 %}
 						<button class="following-view-button" onclick="redirect(`{{ url_for('users.user_posts', username=followed_users[0].username) }}`)">
-							Show {{ length(followed_users_posts) }} More Posts
+							Show {{ followed_users_posts|length }} More Posts
 						</button>
 					{% endif %}
 				{% else %}
@@ -75,5 +55,9 @@
 				{% endif %}
 			</div>
 		</div>
+
+		{% if current_user.is_authenticated %}
+			{{ macros.post_save_modal(current_user=current_user) }}
+		{% endif %}
 	</div>
 {% endblock %}

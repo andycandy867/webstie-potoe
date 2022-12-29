@@ -1,40 +1,39 @@
-{% extends 'base.html' %}
-
+{% extends "base.html" %}
 {% block body %}
 	<div id="main-body">
-		<article id="post-container">
+		<article id="post-container" data-id="{{ post.id }}">
 			<div id="post-header">
 				<div class="post-header">
 					<a href="{{ url_for('users.user_page', username=post.author.username) }}">
-						<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
+						<img class="post-user-img" height="32px" width="32px" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
 					</a>
 
 					<div class="post-header-info">
 						<a href="{{ url_for('users.user_page', username=post.author.username) }}">
 							{{ post.author.username }}
 						</a>
-						<span id="post-followers-count">{{ length(post.author.followers) }} Followers</span>
+						<span id="post-followers-count">{{ post.author.followers|length }} Followers</span>
 					</div>
 
 					{% if current_user.is_authenticated %}
 						{% if current_user != post.author %}
-							{% if author_followed %}
-								<button class="following-button" id="follow-button" style="margin-left: 16px;">Following</button>
+							{% if is_following(post.author) %}
+								<button id="follow-button" class="following-button">Following</button>
 							{% else %}
-								<button class="follow-button" id="follow-button" style="margin-left: 16px">Follow</button>
+								<button id="follow-button" class="follow-button">Follow</button>
 							{% endif %}
 						{% endif %}
 					{% else %}
-						<a href="{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}">
-							<button class="follow-button" style="margin-left: 16px">Follow</button>
+						<a href="{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)) }}">
+							<button class="follow-button">Follow</button>
 						</a>
 					{% endif %}
 				</div>
 
 				{% if post.author == current_user %}
-					<div>
-						<button id="post-update-button" onclick="redirect(`{{ url_for('posts.update_post', post_id=post.id)|unquote }}`)">Update</button>
-						<button id='post-delete-button'>Delete</button>
+					<div id="post-buttons">
+						<button id="post-update-button" onclick="redirect(`{{ url_for('posts.update_post', post_id=post.id) }}`)">Update</button>
+						<button id="post-delete-button">Delete</button>
 					</div>
 				{% endif %}
 			</div>
@@ -44,21 +43,17 @@
 				{{ post.date_posted_ago() }}
 			</div>
 
-			{% with item = namespace(value=0) %}
-				{% for text in post_splinted %}
-					{% if is_media(text) == 'Yes' %}
-						<img class="inserted-media" style="width: {{ get_media_size(text) }}%; 	margin: 24px 0;" src="{{ url_for('static', filename=rm_suffix(text)) }}">
+			{% for text in post_splinted %}
+				{% if is_media(text) == 'Yes' %}
+					<img class="inserted-media" style="width: {{ get_media_size(text) }}%;" src="{{ url_for('static', filename=rm_suffix(text)) }}">
+				{% else %}
+					{% if is_media(text) == 'Empty' %}
+						<p></p>
 					{% else %}
-						{% if is_media(text) == 'Empty' %}
-							<p></p>
-						{% else %}
-							<p class="post-content">{{ text }}</p>
-						{% endif %}
+						<p class="post-content">{{ text }}</p>
 					{% endif %}
-
-					{% set item.value = item.value + 1 %}
-				{% endfor %}
-			{% endwith %}
+				{% endif %}
+			{% endfor %}
 		</article>
 
 		<div id="columns">
@@ -70,48 +65,78 @@
 						{% if current_user.is_authenticated %}
 							{% if post_liked_status == 'liked' %}
 								<button id="post-like">
-									<i class="post-like-img fa fa-thumbs-up"></i>
-									<span>{{ length(post.post_likers) }}</span>
+									<!-- Thumbs Up Icon -->
+									<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+										<path fill="currentColor" d="M23 10a2 2 0 0 0-2-2h-6.32l.96-4.57c.02-.1.03-.21.03-.32c0-.41-.17-.79-.44-1.06L14.17 1L7.59 7.58C7.22 7.95 7 8.45 7 9v10a2 2 0 0 0 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2M1 21h4V9H1v12Z"/>
+									</svg>
+									<span>{{ post.post_likers|length }}</span>
 								</button>
 								<button id="post-dislike">
-									<i class="post-dislike-img fa fa-thumbs-o-down"></i>
-									<span>{{ length(post.post_dislikers) }}</span>
+									<!-- Thumbs Down Outline Icon -->
+									<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+										<path fill="currentColor" d="M19 15V3h4v12h-4M15 3a2 2 0 0 1 2 2v10c0 .55-.22 1.05-.59 1.41L9.83 23l-1.06-1.06c-.27-.27-.44-.64-.44-1.06l.03-.31l.95-4.57H3a2 2 0 0 1-2-2v-2c0-.26.05-.5.14-.73l3.02-7.05C4.46 3.5 5.17 3 6 3h9m0 2H5.97L3 12v2h8.78l-1.13 5.32L15 14.97V5Z"/>
+									</svg>
+									<span>{{ post.post_dislikers|length }}</span>
 								</button>
 							{% elif post_liked_status == 'disliked' %}
 								<button id="post-like">
-									<i class="post-like-img fa fa-thumbs-o-up"></i>
-									<span>{{ length(post.post_likers) }}</span>
+									<!-- Thumbs Up Outline Icon -->
+									<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+										<path fill="currentColor" d="M5 9v12H1V9h4m4 12a2 2 0 0 1-2-2V9c0-.55.22-1.05.59-1.41L14.17 1l1.06 1.06c.27.27.44.64.44 1.05l-.03.32L14.69 8H21a2 2 0 0 1 2 2v2c0 .26-.05.5-.14.73l-3.02 7.05C19.54 20.5 18.83 21 18 21H9m0-2h9.03L21 12v-2h-8.79l1.13-5.32L9 9.03V19Z"/>
+									</svg>
+									<span>{{ post.post_likers|length }}</span>
 								</button>
 								<button id="post-dislike">
-									<i class="post-dislike-img fa fa-thumbs-down"></i>
-									<span>{{ length(post.post_dislikers) }}</span>
+									<!-- Thumbs Down Icon -->
+									<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+										<path fill="currentColor" d="M19 15h4V3h-4m-4 0H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2a2 2 0 0 0 2 2h6.31l-.95 4.57c-.02.1-.03.2-.03.31c0 .42.17.79.44 1.06L9.83 23l6.58-6.59c.37-.36.59-.86.59-1.41V5a2 2 0 0 0-2-2Z"/>
+									</svg>
+									<span>{{ post.post_dislikers|length }}</span>
 								</button>
 							{% else %}
 								<button id="post-like">
-									<i class="post-like-img fa fa-thumbs-o-up"></i>
-									<span>{{ length(post.post_likers) }}</span>
+									<!-- Thumbs Up Outline Icon -->
+									<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+										<path fill="currentColor" d="M5 9v12H1V9h4m4 12a2 2 0 0 1-2-2V9c0-.55.22-1.05.59-1.41L14.17 1l1.06 1.06c.27.27.44.64.44 1.05l-.03.32L14.69 8H21a2 2 0 0 1 2 2v2c0 .26-.05.5-.14.73l-3.02 7.05C19.54 20.5 18.83 21 18 21H9m0-2h9.03L21 12v-2h-8.79l1.13-5.32L9 9.03V19Z"/>
+									</svg>
+									<span>{{ post.post_likers|length }}</span>
 								</button>
 								<button id="post-dislike">
-									<i class="post-dislike-img fa fa-thumbs-o-down"></i>
-									<span>{{ length(post.post_dislikers) }}</span>
+									<!-- Thumbs Down Outline Icon -->
+									<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+										<path fill="currentColor" d="M19 15V3h4v12h-4M15 3a2 2 0 0 1 2 2v10c0 .55-.22 1.05-.59 1.41L9.83 23l-1.06-1.06c-.27-.27-.44-.64-.44-1.06l.03-.31l.95-4.57H3a2 2 0 0 1-2-2v-2c0-.26.05-.5.14-.73l3.02-7.05C4.46 3.5 5.17 3 6 3h9m0 2H5.97L3 12v2h8.78l-1.13 5.32L15 14.97V5Z"/>
+									</svg>
+									<span>{{ post.post_dislikers|length }}</span>
 								</button>
 							{% endif %}
 
 							<button id="post-save-opener">
-								<i class="fa fa-list"></i>
+								<!-- Collection Icon -->
+								<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+									<path fill="currentColor" d="M7 5h14v2H7V5m0 8v-2h14v2H7M4 4.5A1.5 1.5 0 0 1 5.5 6A1.5 1.5 0 0 1 4 7.5A1.5 1.5 0 0 1 2.5 6A1.5 1.5 0 0 1 4 4.5m0 6A1.5 1.5 0 0 1 5.5 12A1.5 1.5 0 0 1 4 13.5A1.5 1.5 0 0 1 2.5 12A1.5 1.5 0 0 1 4 10.5M7 19v-2h14v2H7m-3-2.5A1.5 1.5 0 0 1 5.5 18A1.5 1.5 0 0 1 4 19.5A1.5 1.5 0 0 1 2.5 18A1.5 1.5 0 0 1 4 16.5Z"/>
+								</svg>
 								<span>Save</span>
 							</button>
 						{% else %}
-							<button onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}`)">
-								<i class="post-like-img fa fa-thumbs-o-up"></i>
-								<span>{{ length(post.post_likers) }}</span>
+							<button onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)) }}`)">
+								<!-- Thumbs Up Outline Icon -->
+								<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+									<path fill="currentColor" d="M5 9v12H1V9h4m4 12a2 2 0 0 1-2-2V9c0-.55.22-1.05.59-1.41L14.17 1l1.06 1.06c.27.27.44.64.44 1.05l-.03.32L14.69 8H21a2 2 0 0 1 2 2v2c0 .26-.05.5-.14.73l-3.02 7.05C19.54 20.5 18.83 21 18 21H9m0-2h9.03L21 12v-2h-8.79l1.13-5.32L9 9.03V19Z"/>
+								</svg>
+								<span>{{ post.post_likers|length }}</span>
 							</button>
-							<button onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}`)">
-								<i class="post-dislike-img fa fa-thumbs-o-down"></i>
-								<span>{{ length(post.post_dislikers) }}</span>
+							<button onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)) }}`)">
+								<!-- Thumbs Down Outline Icon -->
+								<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+									<path fill="currentColor" d="M19 15V3h4v12h-4M15 3a2 2 0 0 1 2 2v10c0 .55-.22 1.05-.59 1.41L9.83 23l-1.06-1.06c-.27-.27-.44-.64-.44-1.06l.03-.31l.95-4.57H3a2 2 0 0 1-2-2v-2c0-.26.05-.5.14-.73l3.02-7.05C4.46 3.5 5.17 3 6 3h9m0 2H5.97L3 12v2h8.78l-1.13 5.32L15 14.97V5Z"/>
+								</svg>
+								<span>{{ post.post_dislikers|length }}</span>
 							</button>
-							<button onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}`)">
-								<i class="fa fa-list"></i>
+							<button onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)) }}`)">
+								<!-- Collection Icon -->
+								<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+									<path fill="currentColor" d="M7 5h14v2H7V5m0 8v-2h14v2H7M4 4.5A1.5 1.5 0 0 1 5.5 6A1.5 1.5 0 0 1 4 7.5A1.5 1.5 0 0 1 2.5 6A1.5 1.5 0 0 1 4 4.5m0 6A1.5 1.5 0 0 1 5.5 12A1.5 1.5 0 0 1 4 13.5A1.5 1.5 0 0 1 2.5 12A1.5 1.5 0 0 1 4 10.5M7 19v-2h14v2H7m-3-2.5A1.5 1.5 0 0 1 5.5 18A1.5 1.5 0 0 1 4 19.5A1.5 1.5 0 0 1 2.5 18A1.5 1.5 0 0 1 4 16.5Z"/>
+								</svg>
 								<span>Save</span>
 							</button>
 						{% endif %}
@@ -121,16 +146,25 @@
 				<div id="comment-section-container">
 					<div id="comment-section-header">
 						<h3>{{ comments.count() }} Comments</h3>
-						<button id="sort-button">
-							<i class="fa fa-sort"></i>
-							<span>SORT BY</span>
-						</button>
+
+						<div id="sort-comments-container">
+							<button id="sort-comments-button">
+								<!-- Filter Icon -->
+								<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24"><path fill="currentColor" d="M11 18q-.425 0-.712-.288Q10 17.425 10 17t.288-.712Q10.575 16 11 16h2q.425 0 .713.288q.287.287.287.712t-.287.712Q13.425 18 13 18ZM4 8q-.425 0-.712-.287Q3 7.425 3 7t.288-.713Q3.575 6 4 6h16q.425 0 .712.287Q21 6.575 21 7t-.288.713Q20.425 8 20 8Zm3 5q-.425 0-.713-.288Q6 12.425 6 12t.287-.713Q6.575 11 7 11h10q.425 0 .712.287q.288.288.288.713t-.288.712Q17.425 13 17 13Z"/></svg>
+								<span>SORT BY</span>
+							</button>
+
+							<div id="sort-comments-options" style="display: none;">
+								<button>Most Recent</button>
+								<button>Most Liked</button>
+							</div>
+						</div>
 					</div>
 
 					<div id="comment-section">
 						<div id="comment-create">
-							<img class="comment-account-img" height="36" width="36" draggable="false" src="{{ image_file }}">
-							<form id="comment-create-form" method="POST" action="{{ url_for('posts.comment', post_id=post.id) }}">
+							<img class="comment-account-img" height="36px" width="36px" draggable="false" src="{{ image_file }}">
+							<form id="comment-create-form" method="POST" action="{{ url_for('posts.post', post_id=post.id, action='comment') }}">
 								{{ post_comment_form.hidden_tag() }}
 								{% if current_user.is_authenticated %}
 									{{ post_comment_form.content(class="comment-input", placeholder="Add a comment...") }}
@@ -139,7 +173,7 @@
 										<button id="comment-create-comment-button" type="submit">Comment</button>
 									</div>
 								{% else %}
-									<input class="comment-input" onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}`)" placeholder="Add a comment...">
+									<input class="comment-input" onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)) }}`)" placeholder="Add a comment...">
 								{% endif %}
 							</form>
 						</div>
@@ -148,7 +182,7 @@
 							{% if not comment.comment_id %}
 								<div class="comment" data-id="{{ comment.id}}">
 									<a href="{{ url_for('users.user_page', username=comment.author.username) }}">
-										<img class="comment-account-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
+										<img class="comment-account-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + comment.author.image_file) }}">
 									</a>
 
 									<div class="comment-body">
@@ -166,46 +200,70 @@
 											{% if current_user.is_authenticated %}
 												{% if comment_like_check(comment) == 'True' %}
 													<button class="comment-like">
-														<i class="comment-like-img fa fa-thumbs-up"></i>
-														<span>{{ length(comment.comment_likers) }}</span>
+														<!-- Thumbs Up Icon -->
+														<svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+															<path fill="currentColor" d="M23 10a2 2 0 0 0-2-2h-6.32l.96-4.57c.02-.1.03-.21.03-.32c0-.41-.17-.79-.44-1.06L14.17 1L7.59 7.58C7.22 7.95 7 8.45 7 9v10a2 2 0 0 0 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2M1 21h4V9H1v12Z"/>
+														</svg>
+														<span>{{ comment.comment_likers|length }}</span>
 													</button>
 													<button class="comment-dislike">
-														<i class="comment-dislike-img fa fa-thumbs-o-down"></i>
-														<span>{{ length(comment.comment_dislikers) }}</span>
+														<!-- Thumbs Down Icon -->
+														<svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+															<path fill="currentColor" d="M19 15V3h4v12h-4M15 3a2 2 0 0 1 2 2v10c0 .55-.22 1.05-.59 1.41L9.83 23l-1.06-1.06c-.27-.27-.44-.64-.44-1.06l.03-.31l.95-4.57H3a2 2 0 0 1-2-2v-2c0-.26.05-.5.14-.73l3.02-7.05C4.46 3.5 5.17 3 6 3h9m0 2H5.97L3 12v2h8.78l-1.13 5.32L15 14.97V5Z"/>
+														</svg>
+														<span>{{ comment.comment_dislikers|length }}</span>
 													</button>
 												{% elif not comment_like_check(comment) %}
 													<button class="comment-like">
-														<i class="comment-like-img fa fa-thumbs-o-up"></i>
-														<span>{{ length(comment.comment_likers) }}</span>
+														<!-- Thumbs Up Icon -->
+														<svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+															<path fill="currentColor" d="M5 9v12H1V9h4m4 12a2 2 0 0 1-2-2V9c0-.55.22-1.05.59-1.41L14.17 1l1.06 1.06c.27.27.44.64.44 1.05l-.03.32L14.69 8H21a2 2 0 0 1 2 2v2c0 .26-.05.5-.14.73l-3.02 7.05C19.54 20.5 18.83 21 18 21H9m0-2h9.03L21 12v-2h-8.79l1.13-5.32L9 9.03V19Z"/>
+														</svg>
+														<span>{{ comment.comment_likers|length }}</span>
 													</button>
 													<button class="comment-dislike">
-														<i class="comment-dislike-img fa fa-thumbs-down"></i>
-														<span>{{ length(comment.comment_dislikers) }}</span>
+														<!-- Thumbs Down Icon -->
+														<svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+															<path fill="currentColor" d="M19 15h4V3h-4m-4 0H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2a2 2 0 0 0 2 2h6.31l-.95 4.57c-.02.1-.03.2-.03.31c0 .42.17.79.44 1.06L9.83 23l6.58-6.59c.37-.36.59-.86.59-1.41V5a2 2 0 0 0-2-2Z"/>
+														</svg>
+														<span>{{ comment.comment_dislikers|length }}</span>
 													</button>
 												{% else %}
 													<button class="comment-like">
-														<i class="comment-like-img fa fa-thumbs-o-up"></i>
-														<span>{{ length(comment.comment_likers) }}</span>
+														<!-- Thumbs Up Icon -->
+														<svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+															<path fill="currentColor" d="M5 9v12H1V9h4m4 12a2 2 0 0 1-2-2V9c0-.55.22-1.05.59-1.41L14.17 1l1.06 1.06c.27.27.44.64.44 1.05l-.03.32L14.69 8H21a2 2 0 0 1 2 2v2c0 .26-.05.5-.14.73l-3.02 7.05C19.54 20.5 18.83 21 18 21H9m0-2h9.03L21 12v-2h-8.79l1.13-5.32L9 9.03V19Z"/>
+														</svg>
+														<span>{{ comment.comment_likers|length }}</span>
 													</button>
 													<button class="comment-dislike">
-														<i class="comment-dislike-img fa fa-thumbs-o-down"></i>
-														<span>{{ length(comment.comment_dislikers) }}</span>
+														<!-- Thumbs Down Icon -->
+														<svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+															<path fill="currentColor" d="M19 15V3h4v12h-4M15 3a2 2 0 0 1 2 2v10c0 .55-.22 1.05-.59 1.41L9.83 23l-1.06-1.06c-.27-.27-.44-.64-.44-1.06l.03-.31l.95-4.57H3a2 2 0 0 1-2-2v-2c0-.26.05-.5.14-.73l3.02-7.05C4.46 3.5 5.17 3 6 3h9m0 2H5.97L3 12v2h8.78l-1.13 5.32L15 14.97V5Z"/>
+														</svg>
+														<span>{{ comment.comment_dislikers|length }}</span>
 													</button>
 												{% endif %}
 
 												<button class="comment-reply-button">REPLY</button>
 											{% else %}
-												<button onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}`)">
-													<i class="post-like-img fa fa-thumbs-o-up"></i>
-													<span>{{ length(comment.comment_likers) }}</span>
+												<button onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)) }}`)">
+													<!-- Thumbs Up Icon -->
+													<svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+														<path fill="currentColor" d="M5 9v12H1V9h4m4 12a2 2 0 0 1-2-2V9c0-.55.22-1.05.59-1.41L14.17 1l1.06 1.06c.27.27.44.64.44 1.05l-.03.32L14.69 8H21a2 2 0 0 1 2 2v2c0 .26-.05.5-.14.73l-3.02 7.05C19.54 20.5 18.83 21 18 21H9m0-2h9.03L21 12v-2h-8.79l1.13-5.32L9 9.03V19Z"/>
+													</svg>
+													<span>{{ comment.comment_likers|length }}</span>
 												</button>
 
-												<button onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}`)">
-													<i class="post-dislike-img fa fa-thumbs-o-down"></i>
-													<span>{{ length(comment.comment_dislikers) }}</span>
+												<button onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)) }}`)">
+													<!-- Thumbs Down Icon -->
+													<svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+														<path fill="currentColor" d="M19 15V3h4v12h-4M15 3a2 2 0 0 1 2 2v10c0 .55-.22 1.05-.59 1.41L9.83 23l-1.06-1.06c-.27-.27-.44-.64-.44-1.06l.03-.31l.95-4.57H3a2 2 0 0 1-2-2v-2c0-.26.05-.5.14-.73l3.02-7.05C4.46 3.5 5.17 3 6 3h9m0 2H5.97L3 12v2h8.78l-1.13 5.32L15 14.97V5Z"/>
+													</svg>
+													<span>{{ comment.comment_dislikers|length }}</span>
 												</button>
 
-												<button class="comment-reply-button" onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}`)">
+												<button class="comment-reply-button" onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)) }}`)">
 													REPLY
 												</button>
 											{% endif %}
@@ -214,7 +272,7 @@
 										<!-- Comment Form -->
 										<div class="comment-create" style="display: none;">
 											<img class="comment-account-img" height="36" width="36" draggable="false" src="{{ image_file }}"/>
-											<form id="comment-create-form" method="POST" action="{{ url_for('posts.comment', post_id=post.id, comment_id=comment.id) }}">
+											<form id="comment-create-form" method="POST" action="{{ url_for('posts.post', post_id=post.id, action='comment', comment_id=comment.id) }}">
 												{{ comment_comment_form.hidden_tag() }}
 												{% if current_user.is_authenticated %}
 													{{ comment_comment_form.content(class="comment-input", placeholder="Reply...") }}
@@ -223,7 +281,7 @@
 														<button class="comment-reply-submit-button">Comment</button>
 													</div>
 												{% else %}
-													<a href="{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}">
+													<a href="{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)) }}">
 														<input class="comment-input" placeholder="Reply...">
 													</a>
 												{% endif %}
@@ -239,7 +297,10 @@
 
 											{% if comment_reply_count.value > 0 %}
 												<button class="comment-view-reply-button">
-													<i class="comment-view-reply-image fa fa-caret-down"></i>
+													<!-- Angle Down Icon -->
+													<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+														<path fill="currentColor" d="M12 15.121a.997.997 0 0 1-.707-.293L7.05 10.586a1 1 0 0 1 1.414-1.414L12 12.707l3.536-3.535a1 1 0 0 1 1.414 1.414l-4.243 4.242a.997.997 0 0 1-.707.293Z"/>
+													</svg>
 													View {{ comment_reply_count.value }} replies
 												</button>
 
@@ -266,46 +327,70 @@
 																		{% if current_user.is_authenticated %}
 																			{% if comment_like_check(comment_reply) == 'True' %}
 																				<button class="comment-like">
-																					<i class="comment-like-img fa fa-thumbs-up"></i>
-																					<span>{{ length(comment_reply.comment_likers) }}</span>
+																					<!-- Thumbs Up Icon -->
+																					<svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+																						<path fill="currentColor" d="M23 10a2 2 0 0 0-2-2h-6.32l.96-4.57c.02-.1.03-.21.03-.32c0-.41-.17-.79-.44-1.06L14.17 1L7.59 7.58C7.22 7.95 7 8.45 7 9v10a2 2 0 0 0 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2M1 21h4V9H1v12Z"/>
+																					</svg>
+																					<span>{{ comment_reply.comment_likers|length }}</span>
 																				</button>
 																				<button class="comment-dislike">
-																					<i class="comment-dislike-img fa fa-thumbs-o-down"></i>
-																					<span>{{ length(comment_reply.comment_dislikers) }}</span>
+																					<!-- Thumbs Down Icon -->
+																					<svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+																						<path fill="currentColor" d="M19 15V3h4v12h-4M15 3a2 2 0 0 1 2 2v10c0 .55-.22 1.05-.59 1.41L9.83 23l-1.06-1.06c-.27-.27-.44-.64-.44-1.06l.03-.31l.95-4.57H3a2 2 0 0 1-2-2v-2c0-.26.05-.5.14-.73l3.02-7.05C4.46 3.5 5.17 3 6 3h9m0 2H5.97L3 12v2h8.78l-1.13 5.32L15 14.97V5Z"/>
+																					</svg>
+																					<span>{{ comment_reply.comment_dislikers|length }}</span>
 																				</button>
 																			{% elif not comment_like_check(comment_reply) %}
 																				<button class="comment-like">
-																					<i class="comment-like-img fa fa-thumbs-o-up"></i>
-																					<span>{{ length(comment_reply.comment_likers) }}</span>
+																					<!-- Thumbs Up Icon -->
+																					<svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+																						<path fill="currentColor" d="M5 9v12H1V9h4m4 12a2 2 0 0 1-2-2V9c0-.55.22-1.05.59-1.41L14.17 1l1.06 1.06c.27.27.44.64.44 1.05l-.03.32L14.69 8H21a2 2 0 0 1 2 2v2c0 .26-.05.5-.14.73l-3.02 7.05C19.54 20.5 18.83 21 18 21H9m0-2h9.03L21 12v-2h-8.79l1.13-5.32L9 9.03V19Z"/>
+																					</svg>
+																					<span>{{ comment_reply.comment_likers|length }}</span>
 																				</button>
 																				<button class="comment-dislike">
-																					<i class="comment-dislike-img fa fa-thumbs-down"></i>
-																					<span>{{ length(comment_reply.comment_dislikers) }}</span>
+																					<!-- Thumbs Down Icon -->
+																					<svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+																						<path fill="currentColor" d="M19 15h4V3h-4m-4 0H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2a2 2 0 0 0 2 2h6.31l-.95 4.57c-.02.1-.03.2-.03.31c0 .42.17.79.44 1.06L9.83 23l6.58-6.59c.37-.36.59-.86.59-1.41V5a2 2 0 0 0-2-2Z"/>
+																					</svg>
+																					<span>{{ comment_reply.comment_dislikers|length }}</span>
 																				</button>
 																			{% else %}
 																				<button class="comment-like">
-																					<i class="comment-like-img fa fa-thumbs-o-up"></i>
-																					<span>{{ length(comment_reply.comment_likers) }}</span>
+																					<!-- Thumbs Up Icon -->
+																					<svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+																						<path fill="currentColor" d="M5 9v12H1V9h4m4 12a2 2 0 0 1-2-2V9c0-.55.22-1.05.59-1.41L14.17 1l1.06 1.06c.27.27.44.64.44 1.05l-.03.32L14.69 8H21a2 2 0 0 1 2 2v2c0 .26-.05.5-.14.73l-3.02 7.05C19.54 20.5 18.83 21 18 21H9m0-2h9.03L21 12v-2h-8.79l1.13-5.32L9 9.03V19Z"/>
+																					</svg>
+																					<span>{{ comment_reply.comment_likers|length }}</span>
 																				</button>
 																				<button class="comment-dislike">
-																					<i class="comment-dislike-img fa fa-thumbs-o-down"></i>
-																					<span>{{ length(comment_reply.comment_dislikers) }}</span>
+																					<!-- Thumbs Down Icon -->
+																					<svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+																						<path fill="currentColor" d="M19 15V3h4v12h-4M15 3a2 2 0 0 1 2 2v10c0 .55-.22 1.05-.59 1.41L9.83 23l-1.06-1.06c-.27-.27-.44-.64-.44-1.06l.03-.31l.95-4.57H3a2 2 0 0 1-2-2v-2c0-.26.05-.5.14-.73l3.02-7.05C4.46 3.5 5.17 3 6 3h9m0 2H5.97L3 12v2h8.78l-1.13 5.32L15 14.97V5Z"/>
+																					</svg>
+																					<span>{{ comment_reply.comment_dislikers|length }}</span>
 																				</button>
 																			{% endif %}
 
 																			<button class="comment-reply-button">REPLY</button>
 																		{% else %}
-																			<button onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}`)">
-																				<i class="post-like-img fa fa-thumbs-o-up"></i>
-																				<span>{{ length(comment_reply.comment_likers) }}</span>
+																			<button onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)) }}`)">
+																				<!-- Thumbs Up Icon -->
+																				<svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+																					<path fill="currentColor" d="M5 9v12H1V9h4m4 12a2 2 0 0 1-2-2V9c0-.55.22-1.05.59-1.41L14.17 1l1.06 1.06c.27.27.44.64.44 1.05l-.03.32L14.69 8H21a2 2 0 0 1 2 2v2c0 .26-.05.5-.14.73l-3.02 7.05C19.54 20.5 18.83 21 18 21H9m0-2h9.03L21 12v-2h-8.79l1.13-5.32L9 9.03V19Z"/>
+																				</svg>
+																				<span>{{ comment_reply.comment_likers|length }}</span>
 																			</button>
 
-																			<button onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}`)">
-																				<i class="post-dislike-img fa fa-thumbs-o-down"></i>
-																				<span>{{ length(comment_reply.comment_dislikers) }}</span>
+																			<button onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)) }}`)">
+																				<!-- Thumbs Down Icon -->
+																				<svg xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+																					<path fill="currentColor" d="M19 15V3h4v12h-4M15 3a2 2 0 0 1 2 2v10c0 .55-.22 1.05-.59 1.41L9.83 23l-1.06-1.06c-.27-.27-.44-.64-.44-1.06l.03-.31l.95-4.57H3a2 2 0 0 1-2-2v-2c0-.26.05-.5.14-.73l3.02-7.05C4.46 3.5 5.17 3 6 3h9m0 2H5.97L3 12v2h8.78l-1.13 5.32L15 14.97V5Z"/>
+																				</svg>
+																				<span>{{ comment_reply.comment_dislikers|length }}</span>
 																			</button>
 
-																			<button class="comment-reply-button" onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)|unquote) }}`)">
+																			<button class="comment-reply-button" onclick="redirect(`{{ url_for('users.signin', next=url_for('posts.post', post_id=post.id)) }}`)">
 																				REPLY
 																			</button>
 																		{% endif %}
@@ -331,7 +416,7 @@
 						<header id="post-collection-header">
 							<div>
 								<a href="{{ url_for('collections.collection', list=list_arg) }}"><h2>{{ collection.name }}</h2></a>
-								<span><a href="{{ url_for('users.user_page', username=post.author.username) }}">{{ collection.author.username }}</a> - {{ length(collection.posts) }} Posts</span>
+								<span><a href="{{ url_for('users.user_page', username=post.author.username) }}">{{ collection.author.username }}</a> - {{ collection.posts|length }} Posts</span>
 							</div>
 
 							<button id="post-collection-toggle" onclick="post_collection_toggle()">
@@ -350,7 +435,7 @@
 											<a href="{{ url_for('users.user_page', username=post.author.username) }}">
 												{{ post.author.username }}
 											</a>
-											<span>{{ length(post.author.followers) }} Followers</span>
+											<span>{{ post.author.followers|length }} Followers</span>
 										</div>
 									</div>
 
@@ -367,73 +452,63 @@
 				{% endif %}
 
 				{% for post in recommended_posts %}
-					<article class="post-container">
-						<div class="post-header">
-							<a href="{{ url_for('users.user_page', username=post.author.username) }}">
-								<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
-							</a>
-							<div class="post-header-info">
-								<a href="{{ url_for('users.user_page', username=post.author.username) }}">
-									{{ post.author.username }}
-								</a>
-								<span>{{ length(post.author.followers) }} Followers</span>
-							</div>
-						</div>
-
-						<div class="post-title">
-							<a href="{{ url_for('posts.post', post_id=post.id, list=list_arg) }}">{{ post.title }}</a>
-							{{ post.views }} views · {{ post.date_posted_ago() }}
-						</div>
-
-						<p class="post-content">{{ limit_content[post.id] }}</p>
-					</article>
+					{{ macros.minimized_post(current_user, post, limit_content) }}
 				{% endfor %}
 			</div>
 		</div>
 
-		<!-- Post Save -->
-		<div id="post-save-container" style="display: none;">
-			<div id="post-save-header">
-				<h3>Save To...</h3>
-				<button id="post-save-close">✖</button>
-			</div>
-			<div id="post-save-option-container-container">
-				{% for collection in current_user.collections %}
-					<div class="post-save-option-container" data-collection-id="{{ collection.id }}">
-						{% if post in collection.posts %}
-							<input type="checkbox" checked>
-						{% else %}
-							<input type="checkbox">
-						{% endif %}
-						<button type="button">{{ collection.name }}</button>
-					</div>
-				{% endfor %}
+		{% if current_user.is_authenticated %}
+			<!-- Post Save -->
+			<div id="individual-post-save-modal" style="display: none;">
+				<div id="individual-post-save-header">
+					<h3>Save To...</h3>
+					<button id="individual-post-save-close">✖</button>
+				</div>
+				<div id="individual-post-save-collections">
+					{% for collection in current_user.collections %}
+						<div class="post-save-collection" data-collection-id="{{ collection.id }}">
+							{% if post in collection.posts %}
+								<input type="checkbox" checked>
+							{% else %}
+								<input type="checkbox">
+							{% endif %}
 
-				<div id="create-collection-container" style="display: none;">
-					<label for="create-collection-name">Name</label>
-					<input id="create-collection-name" name="name" type="text">
-					<div id="create-collection-buttons">
-						<button id="create-collection-submit" type="submit">Create Collection</button>
-						<button id="create-collection-cancel" type="button">Cancel</button>
+							<button type="button">{{ collection.name }}</button>
+						</div>
+					{% endfor %}
+
+					<div id="individual-create-collection-container" style="display: none;">
+						<label for="create-collection-name">Name</label>
+						<input id="individual-create-collection-name" type="text">
+						<div id="individual-create-collection-buttons">
+							<button id="individual-create-collection-submit">Create Collection</button>
+							<button id="individual-create-collection-cancel">Cancel</button>
+						</div>
 					</div>
 				</div>
+				<button id="individual-post-save-create-new">
+					<!-- Plus Icon -->
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+						<path fill="currentColor" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6z"/>
+					</svg>
+					Create New Collection
+				</button>
 			</div>
-			<button id="post-save-create-new">
-				<i class="fa fa-plus"></i>
-				Create New Collection
-			</button>
-		</div>
 
-		<!-- Modal -->
+			<!-- Recommended Post Save -->
+			{{ macros.post_save_modal(current_user) }}
+		{% endif %}
+
+		<!-- Post Delete -->
 		<div id="post-delete-modal" style="display: none;">
 			<div id="post-delete-modal-header">
 				<h3>Are you sure you want to delete the post?</h3>
 				<p>The post will be unrecoverable</p>
 			</div>
 
-			<div id="post-delete-modal-body">
-				<button id="post-delete-modal-close">Cancel</button>
-				<button id="post-delete-modal-submit">Delete</button>
+			<div id="post-delete-modal-button-container">
+				<button id="post-delete-modal-close-button">Cancel</button>
+				<button id="post-delete-modal-submit-button">Delete</button>
 			</div>
 		</div>
 	</div>

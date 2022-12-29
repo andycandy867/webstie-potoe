@@ -1,46 +1,15 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block body %}
 	<div id="main-body">
 		<div id="posts-container">
 		</div>
 
-		<template id="post-template">
-			<article class="post-container">
-				<div class="post-header">
-					<a>
-						<img class="post-user-img" height="32" width="32" draggable="false">
-					</a>
-					<div class="post-header-info">
-						<a></a>
-						<span></span>
-					</div>
-				</div>
+		{{ macros.post_template(current_user) }}
 
-				<div class="post-title">
-					<a></a>
-				</div>
+		{{ macros.fake_post() }}
 
-				<p class="post-content"></p>
-			</article>
-		</template>
-
-		<article id="fake-post" class="post-container">
-			<div class="post-header">
-				<div id="fake-post-user-img"></div>
-				<div id="fake-post-username"></div>
-			</div>
-
-			<div id="fake-post-title-container">
-				<div id="fake-post-title"></div>
-				<div id="fake-post-date"></div>
-			</div>
-
-			<div style="margin-top: 8px;">
-				<div class="fake-post-text"></div>
-				<div class="fake-post-text"></div>
-				<div class="fake-post-text"></div>
-				<div class="fake-post-text"></div>
-			</div>
-		</article>
+		{% if current_user.is_authenticated %}
+			{{ macros.post_save_modal(current_user=current_user) }}
+		{% endif %}
 	</div>
 {% endblock%}

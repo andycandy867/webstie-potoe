@@ -1,29 +1,59 @@
-{% extends 'base.html' %}
-
+{% extends "base.html" %}
 {% block body %}
 	<div id="main-body">
-		<div id="search-sort-container">
-			<div id="search-sort-header">
-				<h3>Displaying results for '{{ searched }}'</h3>
-				<button id="search-sort">
-					<i id="search-sort-img" class="fa fa-filter" aria-hidden="true"></i>
-					<h3 id="search-sort-filters">Filters</h3>
-				</button>
+		<div id="search-header">
+			<h3>Displaying results for "{{ searched }}"</h3>
+
+			<button id="search-filter-button">
+				<!-- Filter Icon -->
+				<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24"><path fill="currentColor" d="M11 18q-.425 0-.712-.288Q10 17.425 10 17t.288-.712Q10.575 16 11 16h2q.425 0 .713.288q.287.287.287.712t-.287.712Q13.425 18 13 18ZM4 8q-.425 0-.712-.287Q3 7.425 3 7t.288-.713Q3.575 6 4 6h16q.425 0 .712.287Q21 6.575 21 7t-.288.713Q20.425 8 20 8Zm3 5q-.425 0-.713-.288Q6 12.425 6 12t.287-.713Q6.575 11 7 11h10q.425 0 .712.287q.288.288.288.713t-.288.712Q17.425 13 17 13Z"/></svg>
+				<h3>Filters</h3>
+			</button>
+		</div>
+
+		<div id="search-filter-menu" style="display: none;">
+			<div class="search-filter-column">
+				<h4>Upload Date</h4>
+
+				{% for date_filter in ["Today", "This Week", "This Month", "This Year"] %}
+					{% if filters.date_filter == date_filter %}
+						<button class="search-filter-selection search-filter-selected">{{ date_filter }}</button>
+					{% else %}
+						<a class="search-filter-selection" href="{{ url_for('main.search', search_query=searched, date_filter=date_filter, type_filter=filters.type_filter, tags=filters.tags, sort=filters.sort) }}">{{ date_filter }}</a>
+					{% endif %}
+				{% endfor %}
 			</div>
 
-			<div id="search-sort-menu" style="display: none;">
-				<div id="search-sort-category-">
-					
-				</div>
-				<div>
-					
-				</div>
-				<div>
-					
-				</div>
-				<div>
-					
-				</div>
+			<div class="search-filter-column">
+				<h4>Type</h4>
+
+				{% for type_filter in ["Post", "User", "Collection"] %}
+					{% if filters.type_filter == type_filter %}
+						<button class="search-filter-selection search-filter-selected">{{ type_filter }}</button>
+					{% else %}
+						<a class="search-filter-selection" href="{{ url_for('main.search', search_query=searched, date_filter=filters.date_filter, type_filter=type_filter, tags=filters.tags, sort=filters.sort) }}">{{ type_filter }}</a>
+					{% endif %}
+				{% endfor %}
+			</div>
+
+			<div class="search-filter-column">
+				<h4>Tags</h4>
+
+				{% for tag in ["seek3wl", "Osu Mania"] %}
+					<button class="search-filter-selection">{{ tag }}</button>
+				{% endfor %}
+			</div>
+
+			<div class="search-filter-column">
+				<h4>Sort</h4>
+
+				{% for sort in ["Most Recent", "Most Recent", "Most Liked"] %}
+					{% if filters.sort == sort %}
+						<button class="search-filter-selection search-filter-selected">{{ sort }}</button>
+					{% else %}
+						<a class="search-filter-selection" href="{{ url_for('main.search', search_query=searched, date_filter=filters.date_filter, type_filter=filters.type_filter, tags=filters.tags, sort=sort) }}">{{ sort }}</a>
+					{% endif %}
+				{% endfor %}
 			</div>
 		</div>
 
@@ -35,7 +65,7 @@
 						<div class="result-user-info-container">
 							<h3>{{ user.username }}</h3>
 							<div class="result-user-followers-posts">
-								{{ length(user.followers) }} Followers • {{length(user.posts)}} Posts
+								{{ user.followers|length }} Followers • {{ user.posts|length }} Posts
 							</div>
 							{% if user.description %}
 								<p class="result-user-description">{{ user.description }}</p>
@@ -45,55 +75,21 @@
 				</a>
 
 				{% for post in display_user_posts %}
-					<article class="post-container">
-						<div class="post-header">
-							<a href="{{ url_for('users.user_page', username=post.author.username) }}">
-								<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
-							</a>
-							<div class="post-header-info">
-								<a href="{{ url_for('users.user_page', username=post.author.username) }}">
-									{{ post.author.username }}
-								</a>
-								<span>{{ length(post.author.followers) }} Followers</span>
-							</div>
-						</div>
-
-						<div class="post-title">
-							<a href="{{ url_for('posts.post', post_id=post.id) }}">{{ post.title }}</a>
-							{{ post.views }} views · {{ post.date_posted_ago() }}
-						</div>
-
-						<p class="post-content">{{ limit_content[post.id] }}</p>
-					</article>
+					{{ macros.minimized_post(current_user, post, limit_content) }}
 				{% endfor %}
 			{% endif %}
 
 			{% if posts %}
 				{% for post in posts %}
-					<article class="post-container">
-						<div class="post-header">
-							<a href="{{ url_for('users.user_page', username=post.author.username) }}">
-								<img class="post-user-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='images/profile_pics/' + post.author.image_file) }}">
-							</a>
-							<div class="post-header-info">
-								<a href="{{ url_for('users.user_page', username=post.author.username) }}">
-									{{ post.author.username }}
-								</a>
-								<span>{{ length(post.author.followers) }} Followers</span>
-							</div>
-						</div>
-
-						<div class="post-title">
-							<a href="{{ url_for('posts.post', post_id=post.id) }}">{{ post.title }}</a>
-							{{ post.views }} views · {{ post.date_posted_ago() }}
-						</div>
-
-						<p class="post-content">{{ limit_content[post.id] }}</p>
-					</article>
+					{{ macros.minimized_post(current_user, post, limit_content) }}
 				{% endfor %}
 			{% endif %}
 		{% else %}
 			<h1>No Results Found</h1>
+		{% endif %}
+
+		{% if current_user.is_authenticated %}
+			{{ macros.post_save_modal(current_user=current_user) }}
 		{% endif %}
 	</div>
 {% endblock %}

@@ -1,11 +1,10 @@
 import re
-from datetime import datetime
 from flask import render_template, url_for, flash, redirect, request, abort, Blueprint, make_response, jsonify
 from flask_login import current_user, login_required
 from flaskblog import db
 from flaskblog.models import Post, PostCache, Media, Comment, Collection
 from flaskblog.posts.forms import PostForm, CommentForm
-from flaskblog.posts.utils import save_file, allowed_file
+from flaskblog.posts.utils import save_file, allowed_file, limit_content_posts
 
 
 posts = Blueprint('posts', __name__)
@@ -20,51 +19,48 @@ comments = []
 @posts.route("/post/caches", methods=["GET", "POST"])
 @login_required
 def post_caches():
-	post_cachess = PostCache.query.filter_by(user_id=current_user.id).order_by(PostCache.date_cached.desc()).all()
+	if request.method == "GET":
+		user_post_caches = PostCache.query.filter_by(user_id=current_user.id).order_by(
+			PostCache.date_cached.desc()).all()
 
-	limit_content = {}
-	for post_cache in post_cachess:
-		splinted_raw = re.split('{{|}}', post_cache.content)
+		limit_content = {}
+		for post_cache in user_post_caches:
+			splinted_raw = re.split('{{|}}', post_cache.content)
 
-		splinted = []
-		for i, splint in enumerate(splinted_raw):
-			if splint == '':
-				continue
-			elif '*/#|>' in splint:
-				continue
-			elif EMPTY_CODE in splint:
-				continue
+			splinted = []
+			for i, splint in enumerate(splinted_raw):
+				if splint == '' or "*/#|>" in splint or EMPTY_CODE in splint:
+					continue
+				else:
+					splinted.append(splint)
+
+			if len(splinted) >= 1:
+				if len(splinted[0].split()) < 17:
+					limit_content[post_cache.id] = splinted[0].split('\n')[0]
+				else:
+					limit_content[post_cache.id] = splinted[0] + '...'
 			else:
-				splinted.append(splint)
+				limit_content[post_cache.id] = None
 
-		if len(splinted) >= 1:
-			if len(splinted[0].split()) < 17:
-				limit_content[post_cache.id] = splinted[0].split('\n')[0]
-			else:
-				limit_content[post_cache.id] = splinted[0] + '...'
+		return render_template('post_caches.html', title='Post Caches', user_post_caches=user_post_caches,
+							   limit_content=limit_content)
+	elif request.method == "POST":
+		post_cache_id = request.json['post_cache_id']
+		post_cache = PostCache.get_or_404(post_cache_id)
+
+		if post_cache.user_id == current_user.id:
+			db.session.delete(post_cache)
+			db.session.commit()
+			return make_response(jsonify('success'))
 		else:
-			limit_content[post_cache.id] = None
-
-	return render_template('post_caches.html', title='Post Caches', post_caches=post_cachess, limit_content=limit_content)
-
-
-@posts.route('/post_cache/delete', methods=["POST"])
-def delete_post_cache():
-	post_cache_id = request.json['post_cache_id']
-	post_cache = PostCache.query.filter_by(id=post_cache_id, user_id=current_user.id).first()
-	if post_cache:
-		db.session.delete(post_cache)
-		db.session.commit()
-		return make_response(jsonify('success'))
-	else:
-		return make_response(jsonify('failure'))
+			return make_response(jsonify('failure'))
 
 
 @posts.route("/post/new", methods=["GET", "POST"])
 @login_required
 def new_post():
 	post_form = PostForm()
-	post_cache_id = request.args.get('post_cache_id', None)
+	post_cache_id = request.args.get('post_cache_id')
 
 	if post_cache_id:
 		post_cache = PostCache.query.filter_by(id=post_cache_id, user_id=current_user.id).first()
@@ -167,11 +163,12 @@ def new_post():
 
 
 @posts.route('/post/save', methods=['POST'])
+@login_required
 def save_post():
 	post_cache_id = request.args.get('post_cache_id')
-	post_cache = PostCache.query.filter_by(id=post_cache_id, user_id=current_user.id).first()
+	post_cache = PostCache.query.get_or_404(post_cache_id)
 
-	if post_cache:
+	if post_cache.user_id == current_user.id:
 		all_items = request.json
 		post_cache.title = all_items['title']
 		post_cache.content = ""
@@ -205,6 +202,7 @@ def save_post():
 
 
 @posts.route("/post/delete_media", methods=['POST'])
+@login_required
 def delete_media():
 	media_id = request.json.get('media_id')
 
@@ -234,7 +232,6 @@ def post(post_id):
 		post_comment_form = CommentForm()
 		comment_comment_form = CommentForm()
 
-		author_followed = False
 		post_liked_status = 'undefined'
 		if current_user.is_authenticated:
 			# Post View
@@ -250,10 +247,6 @@ def post(post_id):
 			elif post in current_user.posts_disliked:
 				post_liked_status = 'disliked'
 
-			# Author Following
-			if post.author in current_user.following:
-				author_followed = True
-
 		post_splinted = re.split('{{|}}', post.content)
 
 		for i, splint in enumerate(post_splinted):
@@ -264,7 +257,7 @@ def post(post_id):
 		db.session.commit()
 
 		# Recommended Posts
-		recommended_posts = Post.query.order_by(Post.views.desc()).limit(50).all()
+		recommended_posts = Post.query.filter(Post.id != post_id).order_by(Post.views.desc()).limit(50).all()
 		# Filter by tags similar to this one, user similar to post user (tag + user > user > tag)
 
 		limit_content = {}
@@ -289,16 +282,11 @@ def post(post_id):
 		if list_arg:
 			if list_arg == 'RL':
 				collection = Collection.query.filter_by(user_id=current_user.id, type='RL').first()
-			elif list_arg == 'archived':
-				collection = Collection.query.filter_by(user_id=current_user.id, type='archived').first()
 			else:
 				collection = Collection.query.get_or_404(list_arg)
 
-				if collection.type:
-					if collection.type == 'RL':
-						return redirect(url_for('posts.post', post_id=post.id, list='RL'))
-					elif collection.type == 'archived':
-						return redirect(url_for('posts.post', post_id=post.id, list='archived'))
+				if collection.type == 'RL':
+					return redirect(url_for('posts.post', post_id=post.id, list='RL'))
 
 		if collection:
 			for collection_post in collection.posts:
@@ -317,43 +305,108 @@ def post(post_id):
 
 		return render_template("post.html", title=post.title, post=post, post_splinted=post_splinted, comments=comments,
 							   post_comment_form=post_comment_form, comment_comment_form=comment_comment_form,
-							   post_liked_status=post_liked_status, author_followed=author_followed,
-							   recommended_posts=recommended_posts, list_arg=list_arg, collection=collection,
-							   limit_content=limit_content)
-	elif request.method == "POST":
-		action = request.args.get("action")
+							   post_liked_status=post_liked_status, recommended_posts=recommended_posts,
+							   list_arg=list_arg, collection=collection, limit_content=limit_content)
+	elif request.method == "POST" and current_user.is_authenticated:
+		action = request.args.get("action", type=str)
 
-		if action == "create_new_collection":
-			# Validate length of request.json.get("name")
-			if current_user.is_authenticated:
-				collection = Collection(user_id=current_user.id, name=request.json.get("name"))
-				db.session.add(collection)
+		if action == "like":
+			like_action = request.json.get("action")
+			comment_id = request.json.get("comment_id")
+			liked_status = "undefined"
+
+			if comment_id:
+				# Liking Comment
+				comment = Comment.query.get_or_404(comment_id)
+
+				if comment in current_user.comments_liked:
+					liked_status = "liked"
+				elif comment in current_user.comments_disliked:
+					liked_status = "disliked"
+
+				if like_action == "like":
+					if liked_status == "liked":
+						current_user.comments_liked.remove(comment)
+					elif liked_status == "undefined":
+						current_user.comments_liked.append(comment)
+					elif liked_status == "disliked":
+						current_user.comments_disliked.remove(comment)
+						current_user.comments_liked.append(comment)
+
+				elif like_action == "dislike":
+					if liked_status == "disliked":
+						current_user.comments_disliked.remove(comment)
+					elif liked_status == "undefined":
+						current_user.comments_disliked.append(comment)
+					elif liked_status == "liked":
+						current_user.comments_liked.remove(comment)
+						current_user.comments_disliked.append(comment)
+
 				db.session.commit()
-
-				response = make_response(jsonify({"status": "success",
-												  "collection_id": collection.id,
-												  "collection_name": collection.name}))
+				return make_response(jsonify({"status": "success", "previous_liked_status": liked_status}))
 			else:
-				response = make_response(jsonify({"status": "failure"}))
-		elif action == "update_existing_collection":
-			collection = Collection.query.get(request.json.get("collection_id"))
+				# Liking Post
+				if post in current_user.posts_liked:
+					liked_status = "liked"
+				elif post in current_user.posts_disliked:
+					liked_status = "disliked"
 
-			if collection and current_user.id == collection.user_id:
-				if post in collection.posts:
-					collection.posts.remove(post)
-					response = make_response(jsonify({"status": "success"}))
-				else:
-					collection.posts.append(post)
-					response = make_response(jsonify({"status": "success"}))
+				if like_action == "like":
+					if liked_status == "liked":
+						current_user.posts_liked.remove(post)
+					elif liked_status == "undefined":
+						current_user.posts_liked.append(post)
+					elif liked_status == "disliked":
+						current_user.posts_disliked.remove(post)
+						current_user.posts_liked.append(post)
 
-				collection.date_updated = datetime.utcnow()
+				elif like_action == "dislike":
+					if liked_status == "disliked":
+						current_user.posts_disliked.remove(post)
+					elif liked_status == "undefined":
+						current_user.posts_disliked.append(post)
+					elif liked_status == "liked":
+						current_user.posts_liked.remove(post)
+						current_user.posts_disliked.append(post)
+
 				db.session.commit()
-			else:
-				response = make_response(jsonify({"status": "failure"}))
-		else:
-			response = make_response(jsonify({"status": "failure"}))
+				return make_response(jsonify({"status": "success", "previous_liked_status": liked_status}))
+		elif action == "comment":
+			comment_id = request.args.get('comment_id')
 
-		return response
+			post.views -= 1
+
+			if comment_id:
+				# Commenting under another comment
+				comment_comment_form = CommentForm()
+				comment = Comment.query.get_or_404(comment_id)
+
+				if comment_comment_form.validate_on_submit():
+					created_comment = Comment(content=comment_comment_form.content.data, author=current_user,
+											  parent=Post.query.get(post.id), comment_id=comment.id)
+
+					db.session.add(created_comment)
+					db.session.commit()
+					return redirect(url_for('posts.post', post_id=post.id))
+			else:
+				# Commenting directly to post
+				post_comment_form = CommentForm()
+
+				if post_comment_form.validate_on_submit():
+					created_comment = Comment(content=post_comment_form.content.data, author=current_user,
+											  parent=post)
+
+					db.session.add(created_comment)
+					db.session.commit()
+					return redirect(url_for('posts.post', post_id=post.id))
+		elif action == "delete":
+			if post.user_id == current_user.id:
+				Comment.query.filter_by(post_id=post.id).delete()
+
+				db.session.delete(post)
+				db.session.commit()
+				flash("Post Deleted", "success")
+				return redirect(url_for("main.home"))
 
 
 # Infinite load comments (When Implement)
@@ -371,103 +424,6 @@ def post(post_id):
 # 	return res
 
 
-@posts.route('/post_comment/like', methods=["POST"])
-def like_dislike():
-	post_id = request.json.get('post_id')
-	comment_id = request.json.get('comment_id')
-
-	liked_status = 'undefined'
-
-	if post_id:
-		post = Post.query.get_or_404(post_id)
-		# Liking Post
-		if post in current_user.posts_liked:
-			liked_status = 'liked'
-		elif post in current_user.posts_disliked:
-			liked_status = 'disliked'
-
-		if request.json['action'] == 'like':
-			if liked_status == 'liked':
-				current_user.posts_liked.remove(post)
-			elif liked_status == 'undefined':
-				current_user.posts_liked.append(post)
-			elif liked_status == 'disliked':
-				current_user.posts_disliked.remove(post)
-				current_user.posts_liked.append(post)
-		elif request.json['action'] == 'dislike':
-			if liked_status == 'disliked':
-				current_user.posts_disliked.remove(post)
-			elif liked_status == 'undefined':
-				current_user.posts_disliked.append(post)
-			elif liked_status == 'liked':
-				current_user.posts_liked.remove(post)
-				current_user.posts_disliked.append(post)
-
-		db.session.commit()
-		return make_response(jsonify({'status': 'success', 'previous_liked_status': liked_status}))
-	elif comment_id:
-		comment = Comment.query.get_or_404(comment_id)
-		# Liking Comment
-		if comment in current_user.comments_liked:
-			liked_status = 'liked'
-		elif comment in current_user.comments_disliked:
-			liked_status = 'disliked'
-
-		if request.json['action'] == 'like':
-			if liked_status == 'liked':
-				current_user.comments_liked.remove(comment)
-			elif liked_status == 'undefined':
-				current_user.comments_liked.append(comment)
-			elif liked_status == 'disliked':
-				current_user.comments_disliked.remove(comment)
-				current_user.comments_liked.append(comment)
-
-		elif request.json['action'] == 'dislike':
-			if liked_status == 'disliked':
-				current_user.comments_disliked.remove(comment)
-			elif liked_status == 'undefined':
-				current_user.comments_disliked.append(comment)
-			elif liked_status == 'liked':
-				current_user.comments_liked.remove(comment)
-				current_user.comments_disliked.append(comment)
-
-		db.session.commit()
-		return make_response(jsonify({'status': 'success', 'previous_liked_status': liked_status}))
-	else:
-		return make_response(jsonify({'status': 'failure'}))
-
-
-@posts.route("/comment", methods=["POST"])
-def comment():
-	post_id = request.args.get('post_id')
-	comment_id = request.args.get('comment_id')
-
-	post = Post.query.get_or_404(post_id)
-	post.views -= 1
-
-	if comment_id:
-		# Commenting under another comment
-		comment_comment_form = CommentForm()
-		comment = Comment.query.get_or_404(comment_id)
-
-		if comment_comment_form.validate_on_submit():
-			created_comment = Comment(content=comment_comment_form.content.data, author=current_user,
-									  parent=Post.query.get(post_id), comment_id=comment.id)
-			db.session.add(created_comment)
-			db.session.commit()
-			return redirect(url_for('posts.post', post_id=post_id))
-	else:
-		# Commenting directly to post
-		post_comment_form = CommentForm()
-
-		if post_comment_form.validate_on_submit():
-			created_comment = Comment(content=post_comment_form.content.data, author=current_user,
-									  parent=Post.query.get(post_id))
-			db.session.add(created_comment)
-			db.session.commit()
-			return redirect(url_for('posts.post', post_id=post_id))
-
-
 @posts.route("/post/<int:post_id>/update", methods=["GET", "POST"])
 @login_required
 def update_post(post_id):
@@ -478,8 +434,12 @@ def update_post(post_id):
 
 	post_temp_cache = PostCache.query.filter_by(post_id=post.id, user_id=current_user.id).first()
 
-	post_form = PostForm()
+	if not post_temp_cache:
+		post_temp_cache = PostCache(user_id=current_user.id, post_id=post.id, title=post.title, content=post.content)
+		db.session.add(post_temp_cache)
+		db.session.commit()
 
+	post_form = PostForm()
 	if request.method == "GET":
 		if post_temp_cache:
 			splinted = re.split('{{|}}', post_temp_cache.content)
@@ -497,7 +457,7 @@ def update_post(post_id):
 			post_form.title.data = post_temp_cache.title
 			uploaded_media = Media.query.filter_by(user_id=current_user.id).order_by(Media.date_uploaded.desc())
 			return render_template('update_post.html', title='Update Post', post_id=post.id, post_form=post_form,
-								   uploaded_media=uploaded_media, splinted=splinted)
+								   uploaded_media=uploaded_media, splinted=splinted, post_cache_id=post_temp_cache.id)
 		else:
 			splinted = re.split('{{|}}', post.content)
 
@@ -516,10 +476,11 @@ def update_post(post_id):
 			return render_template('update_post.html', title='Update Post', post_id=post.id, post_form=post_form,
 								   uploaded_media=uploaded_media, splinted=splinted)
 	elif request.method == "POST":
-		post_temp_cache = PostCache.query.filter_by(post_id=post.id, user_id=current_user.id).first()
-		if not post_temp_cache:
-			post_temp_cache = PostCache(user_id=current_user.id, post_id=post.id)
-			db.session.add(post_temp_cache)
+		if request.args.get("action", type=str) == "delete":
+			if post_temp_cache:
+				db.session.delete(post_temp_cache)
+				db.session.commit()
+				return ''
 
 		unsorted_items = []
 		for item in request.form:
@@ -589,25 +550,3 @@ def update_post(post_id):
 			return redirect(url_for('posts.post', post_id=post.id))
 		else:
 			return redirect(url_for('posts.update_post', post_id=post.id))
-
-
-@posts.route("/post/<int:post_id>/delete", methods=["POST"])
-@login_required
-def delete_post(post_id):
-	post_temp_cache_1_0 = request.args.get('post_temp_cache_1_0')
-
-	if post_temp_cache_1_0 == '1':
-		post_temp_cache = PostCache.query.filter_by(post_id=post_id, user_id=current_user.id).first()
-
-		if post_temp_cache:
-			db.session.delete(post_temp_cache)
-			db.session.commit()
-
-		return ''
-	elif post_temp_cache_1_0 == '0':
-		post = Post.query.filter_by(id=post_id, user_id=current_user.id).first()
-
-		db.session.delete(post)
-		db.session.commit()
-		flash('Post Deleted.', 'success')
-		return redirect(url_for('main.home'))

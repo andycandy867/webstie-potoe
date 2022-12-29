@@ -3,9 +3,10 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="icon" type="image/x-icon" href="">
 	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 	<script src="{{ url_for('static', filename='main.js') }}" defer></script>
+	{% import "/macros/macros.html" as macros without context %}
 
 	{% if title %}
 		<title>{{ title }} - Blog</title>
@@ -18,76 +19,141 @@
 		<nav class="top-nav">
 			<div class="nav-left">
 				<div class="side-menu-container">
-					<i id="menu-img" class="fa fa-bars" aria-hidden="true"></i>
+					<button id="side-menu-button">
+						<!-- Hamburger Icon -->
+						<svg xmlns="http://www.w3.org/2000/svg" width="36px" height="36px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 21 21"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.5h12m-12.002 4h11.997M4.5 14.5h11.995"/></svg>
+					</button>
+
 					<div id="side-menu" style="width: 0px; display: none;">
 						<div class="side-menu-div">
-							<a href="{{ url_for('main.home') }}">
-								<i class="fa fa-home" aria-hidden="true"></i>
+							<a href="{{ url_for('main.home') }}" title="Home">
+								<div class="side-menu-icon">
+									<!-- Home Icon -->
+									<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+										<path fill="currentColor" d="M4 21V9l8-6l8 6v12h-6v-7h-4v7Z"/>
+									</svg>
+								</div>
 								<span>Home</span>
 							</a>
-							<a href="{{ url_for('main.explore') }}">
-								<i class="fa fa-compass" aria-hidden="true"></i>
+
+							<a href="{{ url_for('main.explore') }}" title="Explore">
+								<div class="side-menu-icon">
+									<!-- Explore Icon -->
+									<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+										<path fill="currentColor" d="M12 10.9c-.61 0-1.1.49-1.1 1.1s.49 1.1 1.1 1.1c.61 0 1.1-.49 1.1-1.1s-.49-1.1-1.1-1.1zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm2.19 12.19L6 18l3.81-8.19L18 6l-3.81 8.19z"/>
+									</svg>
+								</div>
 								<span>Explore</span>
 							</a>
-							<a href="{{ url_for('main.random') }}">
-								<i class="fa fa-random" aria-hidden="true"></i>
+
+							<a href="{{ url_for('main.random') }}" title="Random">
+								<div class="side-menu-icon">
+									<!-- Random Icon -->
+									<svg xmlns="http://www.w3.org/2000/svg" width="22px" height="22px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 1200 1200">
+										<path fill="currentColor" d="M935.926 42.203v186.061H763.958c-54.408 0-114.484 26.559-164.729 77.32c-50.242 50.761-104.842 126.065-191.527 249.904c-87.076 124.394-135.567 199.565-165.807 233.346c-30.24 33.78-25.376 30.882-69.388 30.882H0v147.863h172.507c66.078 0 132.54-27.619 179.515-80.093c46.975-52.475 91.312-125.164 176.742-247.208c85.82-122.601 140.381-195.159 175.512-230.651c35.129-35.491 36.641-33.5 59.685-33.5h171.967v194.147L1200 306.276L935.926 42.203zM0 228.263v147.863h172.507c44.012 0 39.148-2.975 69.388 30.805c19.456 21.734 51.507 67.826 91.49 125.915c5.419-7.773 7.973-11.521 13.708-19.716c21.78-31.114 41.563-59.187 59.838-84.79c6.36-8.91 11.688-15.939 17.714-24.259c-27.021-39.039-49.525-70.001-72.623-95.803c-46.975-52.474-113.437-80.015-179.515-80.015H0zm935.926 401.464v189.988H763.958c-23.043 0-24.554 1.915-59.684-33.577c-23.237-23.477-56.146-65.093-99.809-124.76c-5.281 7.49-9.555 13.418-15.095 21.333c-30.571 43.674-51.648 75.183-73.777 107.816c31.395 41.578 58.12 73.875 83.637 99.652c50.242 50.763 110.319 77.397 164.729 77.397h171.968v190.22L1200 893.801L935.926 629.727z"/>
+									</svg>
+								</div>
 								<span>Random</span>
 							</a>
-							<a href="{{ url_for('main.following') }}">
-								<i class="fa fa-user-circle-o" aria-hidden="true"></i>
+
+							<a href="{{ url_for('main.following') }}" title="Following">
+								<div class="side-menu-icon">
+									<!-- User Icon -->
+									<svg xmlns="http://www.w3.org/2000/svg" width="28px" height="28px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 15 15">
+										<path fill="currentColor" d="M5 5.5a2.5 2.5 0 1 1 5 0a2.5 2.5 0 0 1-5 0Z"/>
+										<path fill="currentColor" fill-rule="evenodd" d="M7.5 0a7.5 7.5 0 1 0 0 15a7.5 7.5 0 0 0 0-15ZM1 7.5a6.5 6.5 0 1 1 10.988 4.702A3.5 3.5 0 0 0 8.5 9h-2a3.5 3.5 0 0 0-3.488 3.202A6.482 6.482 0 0 1 1 7.5Z" clip-rule="evenodd"/>
+									</svg>
+								</div>
 								<span>Following</span>
 							</a>
 						</div>
+
 						<div class="side-menu-div">
-							<a href="{{ url_for('main.library') }}">
-								<i class="fa fa-book" aria-hidden="true"></i>
+							<a href="{{ url_for('main.library') }}" title="Library">
+								<div class="side-menu-icon">
+									<!-- Library Icon -->
+									<svg xmlns="http://www.w3.org/2000/svg" width="22px" height="22px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 512 512">
+										<path fill="currentColor" d="M84 480H28a12 12 0 0 1-12-12V92a12 12 0 0 1 12-12h56a12 12 0 0 1 12 12v376a12 12 0 0 1-12 12Zm156-272v-52a12 12 0 0 0-12-12H124a12 12 0 0 0-12 12v52ZM112 416v52a12 12 0 0 0 12 12h104a12 12 0 0 0 12-12v-52Zm0-176h128v144H112zm228 240h-72a12 12 0 0 1-12-12V44a12 12 0 0 1 12-12h72a12 12 0 0 1 12 12v424a12 12 0 0 1-12 12Zm29-379.3l30 367.83a12 12 0 0 0 13.45 10.92l72.16-9a12 12 0 0 0 10.47-12.9L465 91.21a12 12 0 0 0-13.2-10.94l-72.13 7.51A12 12 0 0 0 369 100.7Z"/>
+									</svg>
+								</div>
 								<span>Library</span>
 							</a>
-							<a href="{{ url_for('main.history') }}">
-								<i class="fa fa-history" aria-hidden="true"></i>
+
+							<a href="{{ url_for('main.history') }}" title="History">
+								<div class="side-menu-icon">
+									<!-- History Icon -->
+									<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+										<path fill="currentColor" d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89l.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7s-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54l.72-1.21l-3.5-2.08V8H12z"/>
+									</svg>
+								</div>
 								<span>History</span>
 							</a>
-							<a href="{{ url_for('main.liked') }}">
-								<i class="fa fa-thumbs-up" aria-hidden="true"></i>
+
+							<a href="{{ url_for('main.liked') }}" title="Liked">
+								<div class="side-menu-icon">
+									<!-- Thumbs Up Icon -->
+									<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+										<path fill="currentColor" d="M23 10a2 2 0 0 0-2-2h-6.32l.96-4.57c.02-.1.03-.21.03-.32c0-.41-.17-.79-.44-1.06L14.17 1L7.59 7.58C7.22 7.95 7 8.45 7 9v10a2 2 0 0 0 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2M1 21h4V9H1v12Z"/>
+									</svg>
+								</div>
 								<span>Liked</span>
 							</a>
-							<a href="{{ url_for('collections.collection', list='RL') }}">
-								<i class="fa fa-clock-o" aria-hidden="true"></i>
+
+							<a href="{{ url_for('collections.collection', list='RL') }}" title="Read Later">
+								<div class="side-menu-icon">
+									<!-- Clock Icon -->
+									<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+										<path fill="currentColor" d="M12 2A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2m4.2 14.2L11 13V7h1.5v5.2l4.5 2.7l-.8 1.3Z"/>
+									</svg>
+								</div>
 								<span>Read Later</span>
 							</a>
-							<a href="{{ url_for('collections.collection', list='archived') }}">
-								<i class="fa fa-bookmark" aria-hidden="true"></i>
-								<span>Archived</span>
-							</a>
-							{% if length(current_user.collections) > 2 %}
+
+							{% if current_user.collections|length > 1 %}
 								<button class="collections-toggle-button" id="collections-expand-button" style="display: flex;">
-									<i class="fa fa-angle-down" aria-hidden="true"></i>
+									<div class="side-menu-icon">
+										<!-- Angle Down Icon -->
+										<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+											<path fill="currentColor" d="M12 15.121a.997.997 0 0 1-.707-.293L7.05 10.586a1 1 0 0 1 1.414-1.414L12 12.707l3.536-3.535a1 1 0 0 1 1.414 1.414l-4.243 4.242a.997.997 0 0 1-.707.293Z"/>
+										</svg>
+									</div>
 									<span>Show More</span>
 								</button>
 
 								<div id="collections-expanded" style="display: none;">
 									{% for collection in current_user.collections %}
 										{% if not collection.type %}
-											<a href="{{ url_for('collections.collection', list=collection.id) }}">
-												<i class="fa fa-list" aria-hidden="true"></i>
+											<a href="{{ url_for('collections.collection', list=collection.id) }}" title="{{ collection.name }}">
+												<div class="side-menu-icon">
+													<!-- Collection Icon -->
+													<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+														<path fill="currentColor" d="M7 5h14v2H7V5m0 8v-2h14v2H7M4 4.5A1.5 1.5 0 0 1 5.5 6A1.5 1.5 0 0 1 4 7.5A1.5 1.5 0 0 1 2.5 6A1.5 1.5 0 0 1 4 4.5m0 6A1.5 1.5 0 0 1 5.5 12A1.5 1.5 0 0 1 4 13.5A1.5 1.5 0 0 1 2.5 12A1.5 1.5 0 0 1 4 10.5M7 19v-2h14v2H7m-3-2.5A1.5 1.5 0 0 1 5.5 18A1.5 1.5 0 0 1 4 19.5A1.5 1.5 0 0 1 2.5 18A1.5 1.5 0 0 1 4 16.5Z"/>
+													</svg>
+												</div>
 												<span>{{ collection.name }}</span>
 											</a>
 										{% endif %}
 									{% endfor %}
 
 									<button class="collections-toggle-button" id="collections-collapse-button">
-										<i class="fa fa-angle-up" aria-hidden="true"></i>
+										<div class="side-menu-icon">
+											<!-- Angle Up Icon -->
+											<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+												<path fill="currentColor" d="m17 13.41l-4.29-4.24a1 1 0 0 0-1.42 0l-4.24 4.24a1 1 0 0 0 0 1.42a1 1 0 0 0 1.41 0L12 11.29l3.54 3.54a1 1 0 0 0 .7.29a1 1 0 0 0 .71-.29a1 1 0 0 0 .05-1.42Z"/>
+											</svg>
+										</div>
 										<span>Show Less</span>
 									</button>
 								</div>
 							{% endif %}
 						</div>
+
 						{% if current_user.following %}
 							<div class="side-menu-div">
 								<h4>Following</h4>
 								{% for user in current_user.following %}
-									<a href="{{ url_for('users.user_page', username=user.username) }}">
-										<img height="32px" width="32px" src="{{ url_for('static', filename='images/profile_pics/' + user.image_file) }}">
+									<a href="{{ url_for('users.user_page', username=user.username) }}" title="{{ user.username }}">
+										<img id="side-menu-user-img" height="32px" width="32px" src="{{ url_for('static', filename='images/profile_pics/' + user.image_file) }}">
 										<span>{{ user.username }}</span>
 									</a>
 								{% endfor %}
@@ -95,88 +161,120 @@
 						{% endif %}
 					</div>
 				</div>
-				<a href="{{ url_for('main.home') }}">Blog</a>
+
+				<a href="{{ url_for('main.home') }}" title="Blog">Blog</a>
 			</div>
 
-			<form method="POST" action="{{ url_for('main.search') }}" id="search-container">
-				{{ SearchForm.csrf_token(id="search_csrf_token") }}
-				<input id="search-input" type="search" name="searched" placeholder="Search" value="{{ searched }}">
+			<form id="search-container" method="POST" action="{{ url_for('main.search') }}">
+				{{ search_form.csrf_token(id="search_csrf_token") }}
+
+				{{ search_form.search_field(id="search-input", value=searched, placeholder="Search") }}
 				<button id="search-button" type="submit">
-					<i id="search-icon" class="fa fa-search" aria-hidden="true"></i>
+					<!-- Search Icon -->
+					<svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+						<path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5A6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5S14 7.01 14 9.5S11.99 14 9.5 14z"/>
+					</svg>
 				</button>
 			</form>
 
 			<div class="nav-right">
 				{% if current_user.is_authenticated %}
 					{% if has_post_cache %}
-						<a href="{{ url_for('posts.post_caches') }}">Create Post</a>
+						<a href="{{ url_for('posts.post_caches') }}" title="Create Post">Create Post</a>
 					{% else %}
-						<a href="{{ url_for('posts.new_post') }}">Create Post</a>
+						<a href="{{ url_for('posts.new_post') }}" title="Create Post">Create Post</a>
 					{% endif %}
 
 					<div class="dropdown-container">
-						<img id="profile-img" height="32" width="32" draggable="false" src="{{ image_file }}"/>
+						<button id="profile-img">
+							<img height="32px" width="32px" draggable="false" src="{{ image_file }}"/>
+						</button>
+
 						<div id="profile-menu" class="dropdown-menu" style="display: none;">
-							<label class="switch" for="theme-switch">
+							<label class="switch" for="theme-switch" title="Theme">
 								<input id="theme-switch" type="checkbox">
 								<div class="slider round"></div>
 							</label>
-							<a href="{{ url_for('users.user_page', username=current_user.username) }}">Account</a>
-							<a href="{{ url_for('settings.account') }}">Settings</a>
+							<a href="{{ url_for('users.user_page', username=current_user.username) }}" title="Account">Account</a>
+							<a href="{{ url_for('settings.account') }}" title="Settings">Settings</a>
 							<a href="{{ url_for('users.logout') }}">Logout</a>
 						</div>
 					</div>
 				{% else %}
 					<div class="dropdown-container-center">
-						<img id="kebab-img" height="32" width="32" draggable="false" src="{{ url_for('static', filename='icons/kebab_menu.png') }}"/>
+						<button id="kebab-img">
+							<!-- Kebab Icon -->
+							<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 16 16">
+								<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+									<circle cx="8" cy="2.5" r=".75"/>
+									<circle cx="8" cy="8" r=".75"/>
+									<circle cx="8" cy="13.5" r=".75"/>
+								</g>
+							</svg>
+						</button>
+
 						<div id="preferences-menu" class="dropdown-menu" style="display: none;">
-							<label class="switch" for="theme-switch"></label>
-							<input id="theme-switch" type="checkbox">
-							<div class="slider round"></div>
-							<a href="{{ url_for('main.about') }}">About</a>
+							<label class="switch" for="theme-switch" title="Theme">
+								<input id="theme-switch" type="checkbox">
+								<div class="slider round"></div>
+							</label>
+
+							<a href="{{ url_for('main.about') }}" title="About">About</a>
 						</div>
 					</div>
 
-					<a href="{{ url_for('users.signin') }}">
-						<div id="sign-in-button">
-							<i id="sign-in-icon" class="fa fa-user-circle-o" aria-hidden="true"></i>
-							Sign In
-						</div>
+					<a class="sign-in-button" href="{{ url_for('users.signin') }}" title="Sign In">
+						<!-- User Icon -->
+						<svg xmlns="http://www.w3.org/2000/svg" width="28px" height="28px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 15 15">
+							<path fill="currentColor" d="M5 5.5a2.5 2.5 0 1 1 5 0a2.5 2.5 0 0 1-5 0Z"/>
+							<path fill="currentColor" fill-rule="evenodd" d="M7.5 0a7.5 7.5 0 1 0 0 15a7.5 7.5 0 0 0 0-15ZM1 7.5a6.5 6.5 0 1 1 10.988 4.702A3.5 3.5 0 0 0 8.5 9h-2a3.5 3.5 0 0 0-3.488 3.202A6.482 6.482 0 0 1 1 7.5Z" clip-rule="evenodd"/>
+						</svg>
+						Sign In
 					</a>
 				{% endif %}
 			</div>
 		</nav>
 
 		<nav class="left-nav">
-			<a href="{{ url_for('main.home') }}">		
-				<div>
-					<i class="fa fa-home" aria-hidden="true"></i>
-					Home
-				</div>
+			<a href="{{ url_for('main.home') }}" title="Home">		
+				<!-- Home Icon -->
+				<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+					<path fill="currentColor" d="M4 21V9l8-6l8 6v12h-6v-7h-4v7Z"/>
+				</svg>
+				Home
 			</a>
-			<a href="{{ url_for('main.explore') }}">
-				<div>
-					<i class="fa fa-compass" aria-hidden="true"></i>
-					Explore
-				</div>
+
+			<a href="{{ url_for('main.explore') }}" title="Explore">
+				<!-- Explore Icon -->
+				<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+					<path fill="currentColor" d="M12 10.9c-.61 0-1.1.49-1.1 1.1s.49 1.1 1.1 1.1c.61 0 1.1-.49 1.1-1.1s-.49-1.1-1.1-1.1zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm2.19 12.19L6 18l3.81-8.19L18 6l-3.81 8.19z"/>
+				</svg>
+				Explore
 			</a>
-			<a href="{{ url_for('main.random') }}">
-				<div>
-					<i class="fa fa-random" aria-hidden="true"></i>
-					Random
-				</div>
+
+			<a href="{{ url_for('main.random') }}" title="Random">
+				<!-- Random Icon -->
+				<svg xmlns="http://www.w3.org/2000/svg" width="22px" height="22px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 1200 1200">
+					<path fill="currentColor" d="M935.926 42.203v186.061H763.958c-54.408 0-114.484 26.559-164.729 77.32c-50.242 50.761-104.842 126.065-191.527 249.904c-87.076 124.394-135.567 199.565-165.807 233.346c-30.24 33.78-25.376 30.882-69.388 30.882H0v147.863h172.507c66.078 0 132.54-27.619 179.515-80.093c46.975-52.475 91.312-125.164 176.742-247.208c85.82-122.601 140.381-195.159 175.512-230.651c35.129-35.491 36.641-33.5 59.685-33.5h171.967v194.147L1200 306.276L935.926 42.203zM0 228.263v147.863h172.507c44.012 0 39.148-2.975 69.388 30.805c19.456 21.734 51.507 67.826 91.49 125.915c5.419-7.773 7.973-11.521 13.708-19.716c21.78-31.114 41.563-59.187 59.838-84.79c6.36-8.91 11.688-15.939 17.714-24.259c-27.021-39.039-49.525-70.001-72.623-95.803c-46.975-52.474-113.437-80.015-179.515-80.015H0zm935.926 401.464v189.988H763.958c-23.043 0-24.554 1.915-59.684-33.577c-23.237-23.477-56.146-65.093-99.809-124.76c-5.281 7.49-9.555 13.418-15.095 21.333c-30.571 43.674-51.648 75.183-73.777 107.816c31.395 41.578 58.12 73.875 83.637 99.652c50.242 50.763 110.319 77.397 164.729 77.397h171.968v190.22L1200 893.801L935.926 629.727z"/>
+				</svg>
+				Random
 			</a>
-			<a href="{{ url_for('main.following') }}">
-				<div>
-					<i class="fa fa-user-circle-o" aria-hidden="true"></i>
-					Following
-				</div>
+
+			<a href="{{ url_for('main.following') }}" title="Following">
+				<!-- User Icon -->
+				<svg xmlns="http://www.w3.org/2000/svg" width="28px" height="28px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 15 15">
+					<path fill="currentColor" d="M5 5.5a2.5 2.5 0 1 1 5 0a2.5 2.5 0 0 1-5 0Z"/>
+					<path fill="currentColor" fill-rule="evenodd" d="M7.5 0a7.5 7.5 0 1 0 0 15a7.5 7.5 0 0 0 0-15ZM1 7.5a6.5 6.5 0 1 1 10.988 4.702A3.5 3.5 0 0 0 8.5 9h-2a3.5 3.5 0 0 0-3.488 3.202A6.482 6.482 0 0 1 1 7.5Z" clip-rule="evenodd"/>
+				</svg>
+				Following
 			</a>
-			<a href="{{ url_for('main.library') }}">
-				<div>
-					<i class="fa fa-book" aria-hidden="true"></i>
-					Library
-				</div>
+
+			<a href="{{ url_for('main.library') }}" title="Library">
+				<!-- Library Icon -->
+				<svg xmlns="http://www.w3.org/2000/svg" width="22px" height="22px" preserveAspectRatio="xMidYMid meet" viewBox="0 0 512 512">
+					<path fill="currentColor" d="M84 480H28a12 12 0 0 1-12-12V92a12 12 0 0 1 12-12h56a12 12 0 0 1 12 12v376a12 12 0 0 1-12 12Zm156-272v-52a12 12 0 0 0-12-12H124a12 12 0 0 0-12 12v52ZM112 416v52a12 12 0 0 0 12 12h104a12 12 0 0 0 12-12v-52Zm0-176h128v144H112zm228 240h-72a12 12 0 0 1-12-12V44a12 12 0 0 1 12-12h72a12 12 0 0 1 12 12v424a12 12 0 0 1-12 12Zm29-379.3l30 367.83a12 12 0 0 0 13.45 10.92l72.16-9a12 12 0 0 0 10.47-12.9L465 91.21a12 12 0 0 0-13.2-10.94l-72.13 7.51A12 12 0 0 0 369 100.7Z"/>
+				</svg>
+				Library
 			</a>
 		</nav>
 	</header>
@@ -184,7 +282,7 @@
 	<main role="main">
 		{% block errors %}
 		{% endblock %}
-		
+
 		{% with messages = get_flashed_messages(with_categories=true) %} 
 			{% if messages %} 
 				{% for category, message in messages %} 
